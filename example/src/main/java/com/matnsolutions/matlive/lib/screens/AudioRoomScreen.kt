@@ -43,30 +43,30 @@ fun AudioRoomScreen(roomId: String, token: String) {
 
     val context = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(Unit) {
-            MatLiveJoinRoomManger.instance.init(
-                onInvitedToMic = {},
-                onSendGift = {}
-            )
-            MatLiveJoinRoomManger.instance.connect(
-                context = context,
-                roomId = roomId,
-                token = token,
-                name = "Ibrahim Nashatat",
-                avatar = "https://img-cdn.pixlr.com/image-generator/history/65bb506dcb310754719cf81f/ede935de-1138-4f66-8ed7-44bd16efc709/medium.webp",
-                userId = "10",
-                metadata = "{userRome:\"admin\"}"
-            )
+        MatLiveJoinRoomManger.instance.init(
+            onInvitedToMic = {},
+            onSendGift = {}
+        )
+        MatLiveJoinRoomManger.instance.connect(
+            context = context,
+            roomId = roomId,
+            token = token,
+            name = "Ahmed Attia",
+            avatar = "https://img-cdn.pixlr.com/image-generator/history/6565c8dff9ef18d69df3e3a2/fe1887b5-015e-4421-8c6a-1364d2f5b1e9/medium.webp",
+            userId = "10",
+            metadata = "{userRome:\"admin\"}"
+        )
 
-            val seatService = MatLiveRoomManger.instance.seatService
-            seatService?.initWithConfig(
-                MatLiveAudioRoomLayoutConfig(
-                    rowSpacing = 16.0,
-                    rowConfigs = listOf(
-                        MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12),
-                        MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12)
-                    )
+        val seatService = MatLiveRoomManger.instance.seatService
+        seatService?.initWithConfig(
+            MatLiveAudioRoomLayoutConfig(
+                rowSpacing = 16.0,
+                rowConfigs = listOf(
+                    MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12),
+                    MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12)
                 )
             )
+        )
 
         loading = false
     }
@@ -81,7 +81,7 @@ fun AudioRoomScreen(roomId: String, token: String) {
             })
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)){
+        Box(modifier = Modifier.padding(paddingValues)) {
             if (loading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
@@ -100,7 +100,7 @@ fun AudioRoomScreen(roomId: String, token: String) {
 
                     val messages by matLiveRoomManger.messages.collectAsState()
 
-                    Box(modifier = Modifier.weight(1f)){
+                    Box(modifier = Modifier.weight(1f)) {
                         LazyColumn(
                             modifier = Modifier.padding(horizontal = 21.dp),
                         ) {

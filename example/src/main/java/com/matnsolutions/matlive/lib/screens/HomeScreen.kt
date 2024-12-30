@@ -154,7 +154,7 @@ fun HomeScreen(onNavigateToAudioRoom: (String, String) -> Unit) {
         }
     }
 }
-var roomId: String? = null
+var roomId: String? = "test_room"
 private suspend fun createRoom(
     livekitService: LiveKitService,
     setLoading: (Boolean) -> Unit

@@ -1,6 +1,5 @@
 package com.matnsolutions.matlive_sdk.audio.mangers
 
-import androidx.lifecycle.MutableLiveData
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRequestTakeMic
 import com.matnsolutions.matlive_sdk.audio.seats.RoomSeatService
@@ -12,10 +11,7 @@ import io.livekit.android.room.participant.Participant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 
@@ -30,20 +26,23 @@ data class ParticipantTrack(
 )
 
 
-class MatLiveRoomManger : LiveRoomEventReceiverManger() {
+class MatLiveRoomManger : LiveRoomEventManger() {
     companion object {
         val instance = MatLiveRoomManger()
     }
 
     var room: Room? = null
-//    private var listener: EventCollector<RoomEvent>? = null
+
+    //    private var listener: EventCollector<RoomEvent>? = null
     var participantTracks = mutableListOf<ParticipantTrack>()
-    override  var messages: MutableStateFlow<List<MatLiveChatMessage>> = MutableStateFlow(emptyList())
-    override  var inviteRequests: MutableStateFlow<List<MatLiveRequestTakeMic>> = MutableStateFlow(emptyList())
+    override var messages: MutableStateFlow<List<MatLiveChatMessage>> =
+        MutableStateFlow(emptyList())
+    override var inviteRequests: MutableStateFlow<List<MatLiveRequestTakeMic>> =
+        MutableStateFlow(emptyList())
     override var seatService: RoomSeatService? = null
     private var _flagStartedReplayKit = false
     private var _isSetUpped = false
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
 //    val fastConnection: Boolean
 //        get() = room?.engine?.fastConnectOptions != null
@@ -58,99 +57,110 @@ class MatLiveRoomManger : LiveRoomEventReceiverManger() {
         inviteRequests.value = emptyList()
         _askPublish(false)
 
-        room?.events?.collect { event ->
-            when (event) {
-                is RoomEvent.ParticipantConnected -> {
-                    _sortParticipants()
-                }
-
-                is RoomEvent.ParticipantDisconnected -> {
-                    _sortParticipants()
-                }
-
-                is RoomEvent.TrackPublished -> {
-                    _sortParticipants()
-                }
-
-                is RoomEvent.TrackUnpublished -> {
-                    _sortParticipants()
-                }
-
-                is RoomEvent.TrackSubscribed -> {
-                    _sortParticipants()
-                }
-
-                is RoomEvent.TrackUnsubscribed -> {
-                    _sortParticipants()
-                }
-
-                is RoomEvent.TrackStreamStateChanged -> {
-                    kPrint(event.toString())
-    //                        if (!room.canPlaybackAudio) {
-    //                            kPrint("AudioPlaybackStatusChanged Audio playback failed")
-    //                            scope.launch {
-    //                                room.startAudio()
-    //                            }
-    //                        }
-                }
-
-                is RoomEvent.DataReceived -> {
-                    val data = try {
-                        val jsonString = String(event.data, StandardCharsets.UTF_8)
-                        val jsonObject = Json.parseToJsonElement(jsonString).jsonObject
-                        jsonObject.mapValues { it.value.jsonPrimitive.content }
-                    } catch (e: Exception) {
-                        mapOf<String, Any>()
+        coroutineScope.launch {
+            room?.events?.collect { event ->
+                kPrint("event: $event")
+                when (event) {
+                    is RoomEvent.ParticipantConnected -> {
+                        _sortParticipants()
                     }
-                    kPrint(data)
-                    receivedData(
-                        data,
-                        onInvitedToMic,
-                        onSendGift
-                    )
-                }
 
-                is RoomEvent.Disconnected -> {
-                    kPrint("RoomDisconnectedEvent ${event.reason}")
-                }
-
-                is RoomEvent.RecordingStatusChanged -> {
-                    kPrint(event.toString())
-                }
-
-                is RoomEvent.RoomMetadataChanged -> {
-                    kPrint("RoomMetadataChangedEvent ${event.newMetadata}")
-                    if (event.newMetadata != null &&
-                        event.newMetadata!!.isNotEmpty() &&
-                        event.newMetadata!!.contains("seats")
-                    ) {
-                        seatService?.seatsFromMetadata(event.newMetadata)
+                    is RoomEvent.ParticipantDisconnected -> {
+                        _sortParticipants()
                     }
-                }
 
-                is RoomEvent.LocalTrackSubscribed -> {
-                    _sortParticipants()
-                }
+                    is RoomEvent.TrackPublished -> {
+                        _sortParticipants()
+                    }
 
-                is RoomEvent.ParticipantNameChanged -> {
-                    kPrint("ParticipantNameUpdatedEvent")
-                    _sortParticipants()
-                }
+                    is RoomEvent.TrackUnpublished -> {
+                        _sortParticipants()
+                    }
 
-                is RoomEvent.ParticipantMetadataChanged -> {
-                    kPrint("ParticipantMetadataUpdatedEvent")
-                }
+                    is RoomEvent.TrackSubscribed -> {
+                        _sortParticipants()
+                    }
 
-                is RoomEvent.TrackE2EEStateEvent -> {
-                    kPrint("e2ee state: ${event.state}")
-                }
+                    is RoomEvent.TrackUnsubscribed -> {
+                        _sortParticipants()
+                    }
 
-                is RoomEvent.Reconnecting -> {
-                    kPrint("RoomAttemptReconnectEvent ")
-                }
+                    is RoomEvent.TrackStreamStateChanged -> {
+//                        kPrint(event.toString())
+                        //                        if (!room.canPlaybackAudio) {
+                        //                            kPrint("AudioPlaybackStatusChanged Audio playback failed")
+                        //                            scope.launch {
+                        //                                room.startAudio()
+                        //                            }
+                        //                        }
+                    }
 
-                else -> {
-                    kPrint("unhandled event: $event")
+                    is RoomEvent.DataReceived -> {
+                        val data = try {
+                            val jsonString = String(event.data, StandardCharsets.UTF_8)
+                            val jsonObject = JSONObject(jsonString)
+                            val map = mutableMapOf<String, String>()
+
+                            // Convert JSONObject to Map<String, String>
+                            for (key in jsonObject.keys()) {
+                                // Get value as string, handling potential null values
+                                val value = jsonObject.opt(key)?.toString() ?: continue
+                                map[key] = value
+                            }
+                            map
+                        } catch (e: Exception) {
+                            mapOf<String, Any>()
+                        }
+                        kPrint(data)
+                        receivedData(
+                            data,
+                            onInvitedToMic,
+                            onSendGift
+                        )
+                    }
+
+                    is RoomEvent.Disconnected -> {
+//                        kPrint("RoomDisconnectedEvent ${event.reason}")
+                    }
+
+                    is RoomEvent.RecordingStatusChanged -> {
+//                        kPrint(event.toString())
+                    }
+
+                    is RoomEvent.RoomMetadataChanged -> {
+//                        kPrint("RoomMetadataChangedEvent ${event.newMetadata}")
+                        if (event.newMetadata != null &&
+                            event.newMetadata!!.isNotEmpty() &&
+                            event.newMetadata!!.contains("seats")
+                        ) {
+                            seatService?.seatsFromMetadata(event.newMetadata)
+                        }
+                    }
+
+                    is RoomEvent.LocalTrackSubscribed -> {
+                        _sortParticipants()
+                    }
+
+                    is RoomEvent.ParticipantNameChanged -> {
+//                        kPrint("ParticipantNameUpdatedEvent")
+                        _sortParticipants()
+                    }
+
+                    is RoomEvent.ParticipantMetadataChanged -> {
+//                        kPrint("ParticipantMetadataUpdatedEvent")
+                    }
+
+                    is RoomEvent.TrackE2EEStateEvent -> {
+                        kPrint("e2ee state: ${event.state}")
+                    }
+
+                    is RoomEvent.Reconnecting -> {
+//                        kPrint("RoomAttemptReconnectEvent ")
+                    }
+
+                    else -> {
+//                        kPrint("unhandled event: $event")
+                    }
                 }
             }
         }
@@ -225,7 +235,8 @@ class MatLiveRoomManger : LiveRoomEventReceiverManger() {
 
     suspend fun switchSeat(toSeatIndex: Int) {
         val userId = MatLiveJoinRoomManger.instance.currentUser!!.userId
-        val seatId = seatService?.seatList?.value?.indexOfFirst { it.currentUser.value?.userId == userId }
+        val seatId =
+            seatService?.seatList?.value?.indexOfFirst { it.currentUser.value?.userId == userId }
         if (seatId == null || seatId == -1) return
         seatService?.switchSeat(
             seatId,

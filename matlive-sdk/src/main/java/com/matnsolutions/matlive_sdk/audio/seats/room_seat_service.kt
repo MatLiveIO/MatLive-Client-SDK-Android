@@ -1,18 +1,15 @@
 package com.matnsolutions.matlive_sdk.audio.seats
 
-import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
 import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveJoinRoomManger
 import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveUser
 import com.matnsolutions.matlive_sdk.services.LiveKitService
 import com.matnsolutions.matlive_sdk.utils.kPrint
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.UUID
+import org.json.JSONObject
 
 class RoomSeatService {
     var hostSeatIndex = 0
@@ -269,37 +266,55 @@ class RoomSeatService {
                 }
             )
         }
-        return Json.encodeToString(mapOf("seats" to seats))
+        val jsonString =  JSONObject(mapOf("seats" to seats)).toString()
+        return jsonString
     }
 
     fun seatsFromMetadata(metadata: String?) {
         if (metadata == null || !metadata.contains("seats")) return
-        val seats = Json.decodeFromString<Map<String, List<Map<String, Any?>>>>(metadata)["seats"] ?: return
-        for (item in seats) {
-            val seat = _seatList.value.getOrNull(item["seatIndex"] as? Int ?: continue) ?: continue
-            seat.isLocked.value = item["isLocked"] as? Boolean ?: false
-            val currentUser = item["currentUser"] as? Map<String, Any?>
-            if (seat.currentUser.value != null && currentUser != null) {
-                seat.currentUser.value!!.apply {
-                    name = currentUser["name"] as String
-                    userId = currentUser["userId"] as String
-                    roomId = currentUser["roomId"] as String
-                    isMicOnNotifier.value = currentUser["isMuted"] as? Boolean ?: false
-                    avatarUrlNotifier.value = currentUser["avatar"] as? String
+
+        try {
+            val jsonObject = JSONObject(metadata)
+            val seatsArray = jsonObject.getJSONArray("seats") ?: return
+
+            for (i in 0 until seatsArray.length()) {
+                val item = seatsArray.getJSONObject(i)
+                val seatIndex = item.optInt("seatIndex", -1)
+                if (seatIndex == -1) continue
+
+                val seat = _seatList.value.getOrNull(seatIndex) ?: continue
+                seat.isLocked.value = item.optBoolean("isLocked", false)
+
+                if (item.has("currentUser") && !item.isNull("currentUser")) {
+                    val currentUser = item.getJSONObject("currentUser")
+
+                    if (seat.currentUser.value != null) {
+                        seat.currentUser.value!!.apply {
+                            name = currentUser.getString("name")
+                            userId = currentUser.getString("userId")
+                            roomId = currentUser.getString("roomId")
+                            isMicOnNotifier.value = currentUser.optBoolean("isMuted", false)
+                            avatarUrlNotifier.value = currentUser.optString("avatar")
+                        }
+                    } else {
+                        seat.currentUser.value = MatLiveUser(
+                            roomId = currentUser.getString("roomId"),
+                            name = currentUser.getString("name"),
+                            userId = currentUser.getString("userId"),
+                            avatar = currentUser.optString("avatar")
+                        ).apply {
+                            isMicOnNotifier.value = currentUser.optBoolean("isMuted", false)
+                            avatarUrlNotifier.value = currentUser.optString("avatar")
+                        }
+                    }
+                } else {
+                    seat.currentUser.value = null
                 }
-            } else if (currentUser != null) {
-                seat.currentUser.value = MatLiveUser(
-                    roomId = currentUser["roomId"] as String,
-                    name = currentUser["name"] as String,
-                    userId = currentUser["userId"] as String,
-                    avatar = currentUser["avatar"] as String
-                ).apply {
-                    isMicOnNotifier.value = currentUser["isMuted"] as? Boolean ?: false
-                    avatarUrlNotifier.value = currentUser["avatar"] as? String
-                }
-            } else if (currentUser == null) {
-                seat.currentUser.value = null
             }
+        } catch (e: Exception) {
+            // Handle JSON parsing error
+            kPrint("seatsFromMetadata error: $e")
+            return
         }
     }
 }

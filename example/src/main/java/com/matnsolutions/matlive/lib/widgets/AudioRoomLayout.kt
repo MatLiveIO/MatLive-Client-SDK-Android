@@ -1,13 +1,12 @@
 package com.matnsolutions.matlive.lib.widgets
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
+
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
@@ -20,8 +19,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat
-import com.matnsolutions.matlive_sdk.audio.define.MatLiveUser
 import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
+import com.matnsolutions.matlive_sdk.utils.kPrint
 
 @Composable
 fun AudioRoomLayout(
@@ -36,9 +35,8 @@ fun AudioRoomLayout(
     val seatService = MatLiveRoomManger.instance.seatService ?: return
     val seats by seatService.seatList.collectAsState()
     val layoutConfig = seatService.layoutConfig ?: return
-
-    Column(modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Column(
+        modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
     ) {
         layoutConfig.rowConfigs.forEachIndexed { rowIndex, rowConfig ->
             Row(
@@ -47,7 +45,9 @@ fun AudioRoomLayout(
             ) {
                 for (seatIndex in 0 until rowConfig.count) {
                     val globalIndex = calculateGlobalIndex(rowIndex, seatIndex, layoutConfig)
-                    val seat = seats.getOrNull(globalIndex) ?: continue
+                    kPrint(globalIndex)
+                    val seat = seats.getOrNull(globalIndex)!!
+                    kPrint(seat.toString())
                     SeatItem(
                         seat = seat,
                         onTakeMic = onTakeMic,
@@ -80,28 +80,37 @@ private fun SeatItem(
     val isLocked by seat.isLocked.observeAsState(initial = false)
     var showBottomSheet by remember { mutableStateOf(false) }
     Box(modifier = Modifier.padding(horizontal = 6.dp)) {
-        Surface(
-            modifier = Modifier.size(50.dp),
+        Surface(modifier = Modifier.size(50.dp),
             shape = CircleShape,
             color = Color.Gray.copy(alpha = 0.3f),
             onClick = {
                 showBottomSheet = true
-            }
-        ) {
+            }) {
             if (isLocked) {
-                Icon(Icons.Filled.Lock, contentDescription = "Seat Locked", modifier = Modifier.size(22.dp).align(Alignment.Center))
+                Icon(
+                    Icons.Filled.Lock,
+                    contentDescription = "Seat Locked",
+                    modifier = Modifier
+                        .size(22.dp)
+                        .align(Alignment.Center)
+                )
             } else {
                 SeatWidget(seat = seat)
             }
             if (isLocked) {
-                Icon(Icons.Filled.Lock, contentDescription = "Seat Locked", modifier = Modifier.size(22.dp).align(Alignment.Center))
+                Icon(
+                    Icons.Filled.Lock,
+                    contentDescription = "Seat Locked",
+                    modifier = Modifier
+                        .size(22.dp)
+                        .align(Alignment.Center)
+                )
             } else {
                 SeatWidget(seat = seat)
             }
         }
         if (showBottomSheet) {
-            SeatActionBottomSheet(
-                user = seat.currentUser.value,
+            SeatActionBottomSheet(user = seat.currentUser.value,
                 onTakeMic = { onTakeMic(seatIndex) },
                 onMuteMic = { onMuteMic(seatIndex) },
                 onRemoveSpeaker = { onRemoveSpeaker(seatIndex) },
@@ -109,8 +118,8 @@ private fun SeatItem(
                 onLockMic = { onLockMic(seatIndex) },
                 onUnLockMic = { onUnLockMic(seatIndex) },
                 onSwitch = { onSwitchSeat(seatIndex) },
-                onDismiss = { showBottomSheet = false }
-            )
+                showBottomSheet = showBottomSheet,
+                onDismiss = { showBottomSheet = false })
         }
     }
 }
@@ -138,7 +147,13 @@ private fun SeatWidget(seat: MatLiveRoomAudioSeat) {
 //                    }
                 )
             } else {
-                Icon(Icons.Filled.Check, contentDescription = "Mic", modifier = Modifier.size(22.dp).align(Alignment.Center))
+                Icon(
+                    Icons.Filled.Mic,
+                    contentDescription = "Mic",
+                    modifier = Modifier
+                        .size(22.dp)
+                        .align(Alignment.Center)
+                )
             }
         }
         // Mic icon
@@ -154,7 +169,7 @@ private fun SeatWidget(seat: MatLiveRoomAudioSeat) {
                     color = Color.White,
                 ) {
                     Icon(
-                        imageVector = if (isMicOn) Icons.Filled.Check else Icons.Filled.Close,
+                        imageVector = if (isMicOn) Icons.Filled.Mic else Icons.Filled.MicOff,
                         contentDescription = "Mic Status",
                         modifier = Modifier.size(12.dp),
                         tint = if (isMicOn) Color.Green else Color.Red
@@ -166,7 +181,11 @@ private fun SeatWidget(seat: MatLiveRoomAudioSeat) {
 }
 
 
-private fun calculateGlobalIndex(rowIndex: Int, seatIndex: Int, layoutConfig: com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutConfig): Int {
+private fun calculateGlobalIndex(
+    rowIndex: Int,
+    seatIndex: Int,
+    layoutConfig: com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutConfig
+): Int {
     var totalPreviousSeats = 0
     for (i in 0 until rowIndex) {
         totalPreviousSeats += layoutConfig.rowConfigs[i].count

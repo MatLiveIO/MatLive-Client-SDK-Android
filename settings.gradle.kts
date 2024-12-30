@@ -20,6 +20,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "matlive"
+rootProject.name = "MatLive-Client-SDK-Android"
 include(":example")
 include(":matlive-sdk")

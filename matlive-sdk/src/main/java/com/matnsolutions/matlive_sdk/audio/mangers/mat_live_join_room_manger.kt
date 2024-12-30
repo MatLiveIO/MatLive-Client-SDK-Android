@@ -12,6 +12,7 @@ import io.livekit.android.room.track.LocalAudioTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 data class JoinRequest(
     var url: String = "",
@@ -41,7 +42,7 @@ class MatLiveJoinRoomManger private constructor() {
     var onSendGift: ((String) -> Unit)? = null
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
-    suspend fun init(
+    fun init(
         onInvitedToMic: ((Int) -> Unit)?,
         onSendGift: ((String) -> Unit)?,
     ) {
@@ -114,7 +115,7 @@ class MatLiveJoinRoomManger private constructor() {
     }
 
     suspend fun connect(
-        context:Context,
+        context: Context,
         token: String,
         name: String,
         avatar: String,
@@ -140,7 +141,7 @@ class MatLiveJoinRoomManger private constructor() {
             }
 
             val room = LiveKit.create(
-                appContext= context,
+                appContext = context,
                 options = RoomOptions(
                     adaptiveStream = _request.adaptiveStream,
                     dynacast = _request.dynacast,
@@ -152,13 +153,17 @@ class MatLiveJoinRoomManger private constructor() {
                 )
             )
             room.prepareConnection(_request.url, _request.token)
-            room.connect(
-                _request.url,
-                _request.token,
+
+            coroutineScope.launch {
+                room.connect(
+                    _request.url,
+                    _request.token,
 //                options = ConnectOptions(
 //                    microphone = TrackOption(track = audioTrack),
 //                )
-            )
+                )
+            }
+
             MatLiveRoomManger.instance.room = room
 //            MatLiveRoomManger.instance.listener = room.createListener()
             MatLiveRoomManger.instance.setUp(

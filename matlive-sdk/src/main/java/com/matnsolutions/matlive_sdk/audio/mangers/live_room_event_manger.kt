@@ -9,11 +9,10 @@ import com.matnsolutions.matlive_sdk.utils.kPrint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 
-open class LiveRoomEventReceiverManger {
+open class LiveRoomEventManger {
     open var seatService: RoomSeatService? = null
     private val _messages = MutableStateFlow<List<MatLiveChatMessage>>(emptyList())
     open val messages: StateFlow<List<MatLiveChatMessage>> = _messages.asStateFlow()
@@ -69,23 +68,30 @@ open class LiveRoomEventReceiverManger {
     }
 
 
-    private suspend fun _publish(data: Map<String, Any>) {
+    private suspend fun publish(data: Map<String, Any>) {
         val room = MatLiveRoomManger.instance.room
         if (room != null) {
-            val mutableData = data.toMutableMap()
-            mutableData["user"] = mapOf(
-                "userId" to MatLiveJoinRoomManger.instance.currentUser?.userId,
-                "name" to MatLiveJoinRoomManger.instance.currentUser?.name,
-                "avatar" to MatLiveJoinRoomManger.instance.currentUser?.avatar
-            )
-            mutableData["roomId"] = room.name.toString()
-            val decoded = Json.encodeToString(mutableData).toByteArray(StandardCharsets.UTF_8)
+            val jsonObject = JSONObject(data)
+
+            // Add user data
+            val userObject = JSONObject().apply {
+                put("userId", MatLiveJoinRoomManger.instance.currentUser?.userId)
+                put("name", MatLiveJoinRoomManger.instance.currentUser?.name)
+                put("avatar", MatLiveJoinRoomManger.instance.currentUser?.avatar)
+            }
+            jsonObject.put("user", userObject)
+
+            // Add room ID
+            jsonObject.put("roomId", room.name.toString())
+
+            // Convert to byte array and publish
+            val decoded = jsonObject.toString().toByteArray(StandardCharsets.UTF_8)
             room.localParticipant.publishData(decoded)
         }
     }
 
     open suspend fun sendMessage(message: String) {
-        _publish(
+        publish(
             mapOf(
                 "event" to MatLiveEvents.sendMessage,
                 "message" to message
@@ -94,7 +100,7 @@ open class LiveRoomEventReceiverManger {
     }
 
     suspend fun sendGift(gift: String) {
-        _publish(
+        publish(
             mapOf(
                 "event" to MatLiveEvents.sendGift,
                 "gift" to gift
@@ -103,7 +109,7 @@ open class LiveRoomEventReceiverManger {
     }
 
     suspend fun clearChat() {
-        _publish(
+        publish(
             mapOf(
                 "event" to MatLiveEvents.clearChat
             )
@@ -111,7 +117,7 @@ open class LiveRoomEventReceiverManger {
     }
 
     suspend fun inviteUserToTakeMic(userId: String, seatIndex: Int) {
-        _publish(
+        publish(
             mapOf(
                 "event" to MatLiveEvents.inviteUserToTakeMic,
                 "seatIndex" to seatIndex,
@@ -121,7 +127,7 @@ open class LiveRoomEventReceiverManger {
     }
 
     suspend fun requestTakeMic(seatIndex: Int) {
-        _publish(
+        publish(
             mapOf(
                 "event" to MatLiveEvents.requestTakeMic,
                 "seatIndex" to seatIndex

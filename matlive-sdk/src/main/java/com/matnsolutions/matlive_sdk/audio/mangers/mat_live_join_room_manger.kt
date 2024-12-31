@@ -8,6 +8,8 @@ import io.livekit.android.AudioOptions
 import io.livekit.android.LiveKit
 import io.livekit.android.LiveKitOverrides
 import io.livekit.android.RoomOptions
+import io.livekit.android.audio.AudioProcessorOptions
+import io.livekit.android.audio.AudioSwitchHandler
 import io.livekit.android.e2ee.BaseKeyProvider
 import io.livekit.android.e2ee.E2EEOptions
 import io.livekit.android.room.track.LocalAudioTrack
@@ -34,12 +36,14 @@ class MatLiveJoinRoomManger private constructor() {
     }
 
     private val _request = JoinRequest()
-//    private var _audioInputs: List<MediaDevice> = emptyList()
+
+    //    private var _audioInputs: List<MediaDevice> = emptyList()
     private var _subscription: kotlinx.coroutines.Job? = null
     var currentUser: MatLiveUser? = null
     var audioTrack: LocalAudioTrack? = null
     var roomId: String = ""
-//    private var _selectedAudioDevice: MediaDevice? = null
+
+    //    private var _selectedAudioDevice: MediaDevice? = null
     var onInvitedToMic: ((Int) -> Unit)? = null
     var onSendGift: ((String) -> Unit)? = null
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
@@ -155,10 +159,10 @@ class MatLiveJoinRoomManger private constructor() {
                     e2eeOptions = e2eeOptions,
                 ),
                 overrides = LiveKitOverrides(
-                    audioOptions = AudioOptions(audioProcessorOptions = null),
+                    audioOptions = AudioOptions(audioProcessorOptions = AudioProcessorOptions()),
                 ),
             )
-//            room.prepareConnection(_request.url, _request.token)
+            room.prepareConnection(_request.url, _request.token)
 
             coroutineScope.launch {
                 room.connect(
@@ -184,6 +188,10 @@ class MatLiveJoinRoomManger private constructor() {
                 onSendGift,
             )
             delay(1000)
+            val audioHandler = room.audioHandler as AudioSwitchHandler
+            audioHandler.let {
+                it.selectDevice(it.availableAudioDevices.last())
+            }
         } catch (error: Exception) {
             kPrint("Could not connect $error")
             throw Exception("Failed to update metadata: $error");

@@ -8,10 +8,12 @@ import io.livekit.android.LiveKit
 import io.livekit.android.RoomOptions
 import io.livekit.android.e2ee.BaseKeyProvider
 import io.livekit.android.e2ee.E2EEOptions
+import io.livekit.android.room.Room
 import io.livekit.android.room.track.LocalAudioTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 data class JoinRequest(
@@ -151,6 +153,9 @@ class MatLiveJoinRoomManger private constructor() {
 //                    ),
                     e2eeOptions = e2eeOptions,
                 )
+//                ,overrides = LiveKitOverrides(
+//                    audioOptions = AudioOptions(audioProcessorOptions = audioProcessorOptions),
+//                ),
             )
             room.prepareConnection(_request.url, _request.token)
 
@@ -170,8 +175,10 @@ class MatLiveJoinRoomManger private constructor() {
                 onInvitedToMic,
                 onSendGift,
             )
+            delay(1000)
         } catch (error: Exception) {
             kPrint("Could not connect $error")
+            throw Exception("Failed to update metadata: $error");
         }
     }
 }

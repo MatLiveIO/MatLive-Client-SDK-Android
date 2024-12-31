@@ -1,5 +1,6 @@
 package com.matnsolutions.matlive_sdk.audio.seats
 
+import android.util.Log
 import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveJoinRoomManger
 import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat
@@ -28,7 +29,8 @@ class RoomSeatService {
         layoutConfig = config
         _seatList.value = emptyList()
         initSeat(config)
-        seatsFromMetadata(MatLiveRoomManger.instance.room?.metadata)
+        val metadata = MatLiveRoomManger.instance.room?.metadata
+        seatsFromMetadata(metadata)
     }
 
     private fun initSeat(config: MatLiveAudioRoomLayoutConfig) {
@@ -314,6 +316,8 @@ class RoomSeatService {
         } catch (e: Exception) {
             // Handle JSON parsing error
             kPrint("seatsFromMetadata error: $e")
+            val stackTraceString = e.stackTraceToString()
+            Log.e("seatsFromMetadata", "Error: $stackTraceString")
             return
         }
     }

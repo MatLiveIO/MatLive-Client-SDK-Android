@@ -1,5 +1,6 @@
 package com.matnsolutions.matlive_sdk.audio.mangers
 
+import android.util.Log
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRequestTakeMic
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveEvents
@@ -14,8 +15,9 @@ import java.nio.charset.StandardCharsets
 
 open class LiveRoomEventManger {
     open var seatService: RoomSeatService? = null
-    private val _messages = MutableStateFlow<List<MatLiveChatMessage>>(emptyList())
-    open val messages: StateFlow<List<MatLiveChatMessage>> = _messages.asStateFlow()
+//    private val _messages = MutableStateFlow<List<MatLiveChatMessage>>(emptyList())
+    open val messages:  MutableStateFlow<List<MatLiveChatMessage>> =
+    MutableStateFlow(emptyList())
     private val _inviteRequests = MutableStateFlow<List<MatLiveRequestTakeMic>>(emptyList())
     open val inviteRequests: StateFlow<List<MatLiveRequestTakeMic>> = _inviteRequests.asStateFlow()
 
@@ -28,7 +30,7 @@ open class LiveRoomEventManger {
         if (seatService == null) return
         try {
             val event = data["event"] as Int
-            val user = data["user"] as Map<*, *>
+            val user = data["user"] as JSONObject
             val matUser = MatLiveUser(
                 userId = user["userId"] as String,
                 name = user["name"] as String,
@@ -38,14 +40,14 @@ open class LiveRoomEventManger {
             )
             when (event) {
                 MatLiveEvents.sendMessage -> {
-                    _messages.value += MatLiveChatMessage(
+                    messages.value += MatLiveChatMessage(
                         user = matUser,
                         message = data["message"] as String,
                         roomId = data["roomId"] as String
                     )
                 }
                 MatLiveEvents.clearChat -> {
-                    _messages.value = emptyList()
+                    messages.value = emptyList()
                 }
                 MatLiveEvents.inviteUserToTakeMic -> {
                     if (MatLiveJoinRoomManger.instance.currentUser?.userId == data["userId"] && onInvitedToMic != null) {
@@ -64,7 +66,8 @@ open class LiveRoomEventManger {
             }
         } catch (e: Exception) {
             kPrint("Error handling data received: $e")
-        }
+            val stackTraceString = e.stackTraceToString()
+            Log.e("MyTag", "Error: $stackTraceString")        }
     }
 
 

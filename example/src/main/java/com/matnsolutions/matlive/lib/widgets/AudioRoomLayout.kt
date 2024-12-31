@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat
 import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
-import com.matnsolutions.matlive_sdk.utils.kPrint
 
 @Composable
 fun AudioRoomLayout(
@@ -45,9 +44,7 @@ fun AudioRoomLayout(
             ) {
                 for (seatIndex in 0 until rowConfig.count) {
                     val globalIndex = calculateGlobalIndex(rowIndex, seatIndex, layoutConfig)
-                    kPrint(globalIndex)
                     val seat = seats.getOrNull(globalIndex)!!
-                    kPrint(seat.toString())
                     SeatItem(
                         seat = seat,
                         onTakeMic = onTakeMic,

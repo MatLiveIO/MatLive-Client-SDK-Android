@@ -42,7 +42,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onNavigateToAudioRoom: (String, String) -> Unit) {
+fun HomeScreen(onNavigateToAudioRoom: (roomId: String, token: String, avatar: String, userName: String, userId: String) -> Unit) {
     val livekitService = remember { LiveKitService("https://tkstg.t-wasel.com") }
     var isCreateLoading by remember { mutableStateOf(false) }
     var isJoinLoading by remember { mutableStateOf(false) }
@@ -71,7 +71,8 @@ fun HomeScreen(onNavigateToAudioRoom: (String, String) -> Unit) {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(24.dp))
-            val displayMessage = if (roomId != null) roomId!! else "Create a new room and start talking with others"
+            val displayMessage =
+                if (roomId != null) roomId!! else "Create a new room and start talking with others"
             Text(
                 text = displayMessage,
                 style = TextStyle(
@@ -111,7 +112,7 @@ fun HomeScreen(onNavigateToAudioRoom: (String, String) -> Unit) {
             }
             Spacer(modifier = Modifier.height(48.dp))
             Box(
-                modifier = Modifier.size(width = 200.dp, height = 50.dp)
+                modifier = Modifier.size(width = 300.dp, height = 50.dp)
             ) {
                 Button(
                     onClick = {
@@ -129,7 +130,13 @@ fun HomeScreen(onNavigateToAudioRoom: (String, String) -> Unit) {
 //                                    intent.putExtra("roomId", roomId)
 //                                    intent.putExtra("token", token)
 //                                    startActivity(intent)
-                                    onNavigateToAudioRoom(roomId, token)
+                                    onNavigateToAudioRoom(
+                                        roomId,
+                                        token,
+                                        "https://img-cdn.pixlr.com/image-generator/history/6565c8dff9ef18d69df3e3a2/fe1887b5-015e-4421-8c6a-1364d2f5b1e9/medium.webp",
+                                        "Ahmed Attia",
+                                        "10"
+                                    )
                                 }
                             }
                         }
@@ -145,7 +152,55 @@ fun HomeScreen(onNavigateToAudioRoom: (String, String) -> Unit) {
                         )
                     } else {
                         Text(
-                            text = "Join Room",
+                            text = "Join Room as 'Ahmed Attia'",
+                            style = TextStyle(fontSize = 18.sp)
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier.size(width = 300.dp, height = 50.dp)
+            ) {
+                Button(
+                    onClick = {
+                        if (!isJoinLoading) {
+                            coroutineScope.launch {
+                                joinRoom(
+                                    livekitService,
+                                    { isJoinLoading = it },
+                                    roomId!!
+                                ) { roomId, token ->
+//                                    val intent = Intent(
+//                                        this@MainActivity,
+//                                        AudioRoomScreen::class.java
+//                                    )
+//                                    intent.putExtra("roomId", roomId)
+//                                    intent.putExtra("token", token)
+//                                    startActivity(intent)
+                                    onNavigateToAudioRoom(
+                                        roomId,
+                                        token,
+                                        "https://img-cdn.pixlr.com/image-generator/history/65772796905f29530816ea40/4ca9ba3d-c418-4153-a36a-77f4182236a7/medium.webp",
+                                        "Test User2",
+                                        "12"
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    enabled = !isJoinLoading,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (isJoinLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Join Room as 'Test User2'",
                             style = TextStyle(fontSize = 18.sp)
                         )
                     }
@@ -154,6 +209,7 @@ fun HomeScreen(onNavigateToAudioRoom: (String, String) -> Unit) {
         }
     }
 }
+
 var roomId: String? = "test_room"
 private suspend fun createRoom(
     livekitService: LiveKitService,
@@ -202,28 +258,5 @@ private suspend fun joinRoom(
         kPrint(data = "Error: $e")
     } finally {
         setLoading(false)
-    }
-}
-@Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
-
-    NavHost(navController = navController, startDestination = "main") {
-        composable("main") {
-            HomeScreen(onNavigateToAudioRoom = { roomId, token ->
-                navController.navigate("audioRoom/$roomId?token=$token")
-            })
-        }
-        composable(
-            route = "audioRoom/{roomId}?token={token}",
-            arguments = listOf(
-                navArgument("roomId") { type = NavType.StringType },
-                navArgument("token") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val roomId = backStackEntry.arguments?.getString("roomId") ?: ""
-            val token = backStackEntry.arguments?.getString("token") ?: ""
-            AudioRoomScreen(roomId = roomId, token = token)
-        }
     }
 }

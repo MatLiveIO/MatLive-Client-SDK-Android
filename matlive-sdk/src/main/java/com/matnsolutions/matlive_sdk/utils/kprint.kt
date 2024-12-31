@@ -15,5 +15,5 @@ fun kPrint(data: Any?) {
 
 private fun _pr(data: String) {
     Log.d("KPrint", data)
-    Log.d("KPrint", Thread.currentThread().stackTrace[2].toString())
+//    Log.d("KPrint", Thread.currentThread().stackTrace[2].toString())
 }

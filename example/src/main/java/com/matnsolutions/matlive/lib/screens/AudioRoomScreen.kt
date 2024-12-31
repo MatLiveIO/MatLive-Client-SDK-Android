@@ -1,5 +1,6 @@
 package com.matnsolutions.matlive.lib.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -31,11 +32,21 @@ import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveJoinRoomManger
 import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
 import com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutConfig
 import com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutRowConfig
+import com.matnsolutions.matlive_sdk.utils.kPrint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AudioRoomScreen(roomId: String, token: String) {
+fun AudioRoomScreen(
+    roomId: String,
+    token: String,
+    avatar: String,
+    userName: String,
+    userId: String,
+) {
     val matLiveRoomManger = MatLiveRoomManger.instance
     var loading by remember { mutableStateOf(true) }
     val controller = remember { mutableStateOf("") }
@@ -51,9 +62,9 @@ fun AudioRoomScreen(roomId: String, token: String) {
             context = context,
             roomId = roomId,
             token = token,
-            name = "Ahmed Attia",
-            avatar = "https://img-cdn.pixlr.com/image-generator/history/6565c8dff9ef18d69df3e3a2/fe1887b5-015e-4421-8c6a-1364d2f5b1e9/medium.webp",
-            userId = "10",
+            name = userName,
+            avatar = avatar,
+            userId = userId,
             metadata = "{userRome:\"admin\"}"
         )
 
@@ -70,7 +81,14 @@ fun AudioRoomScreen(roomId: String, token: String) {
 
         loading = false
     }
-
+    DisposableEffect(Unit) {
+        onDispose {
+            Log.e("DisposableEffect", "DisposableEffect")
+            CoroutineScope(Dispatchers.Main).launch {
+                MatLiveJoinRoomManger.instance.close()
+            }
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(title = {

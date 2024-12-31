@@ -35,14 +35,16 @@ class MatLiveRoomManger : LiveRoomEventManger() {
 
     //    private var listener: EventCollector<RoomEvent>? = null
     var participantTracks = mutableListOf<ParticipantTrack>()
-    override var messages: MutableStateFlow<List<MatLiveChatMessage>> =
-        MutableStateFlow(emptyList())
+
+    //    override var messages: MutableStateFlow<List<MatLiveChatMessage>> =
+//        MutableStateFlow(emptyList())
     override var inviteRequests: MutableStateFlow<List<MatLiveRequestTakeMic>> =
         MutableStateFlow(emptyList())
     override var seatService: RoomSeatService? = null
     private var _flagStartedReplayKit = false
     private var _isSetUpped = false
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    private val coroutineMainScope = CoroutineScope(Dispatchers.Main)
 
 //    val fastConnection: Boolean
 //        get() = room?.engine?.fastConnectOptions != null
@@ -99,17 +101,17 @@ class MatLiveRoomManger : LiveRoomEventManger() {
                         val data = try {
                             val jsonString = String(event.data, StandardCharsets.UTF_8)
                             val jsonObject = JSONObject(jsonString)
-                            val map = mutableMapOf<String, String>()
+                            val map = mutableMapOf<String, Any>()
 
                             // Convert JSONObject to Map<String, String>
                             for (key in jsonObject.keys()) {
                                 // Get value as string, handling potential null values
-                                val value = jsonObject.opt(key)?.toString() ?: continue
+                                val value = jsonObject.opt(key) ?: continue
                                 map[key] = value
                             }
                             map
                         } catch (e: Exception) {
-                            mapOf<String, Any>()
+                            mapOf()
                         }
                         kPrint(data)
                         receivedData(
@@ -133,7 +135,9 @@ class MatLiveRoomManger : LiveRoomEventManger() {
                             event.newMetadata!!.isNotEmpty() &&
                             event.newMetadata!!.contains("seats")
                         ) {
-                            seatService?.seatsFromMetadata(event.newMetadata)
+                            coroutineMainScope.launch {
+                                seatService?.seatsFromMetadata(event.newMetadata)
+                            }
                         }
                     }
 
@@ -181,6 +185,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
         inviteRequests.value = emptyList()
 //        listener?.dispose()
         room?.disconnect()
+        room?.release()
         room = null
     }
 

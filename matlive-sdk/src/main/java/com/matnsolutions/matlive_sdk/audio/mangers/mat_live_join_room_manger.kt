@@ -4,15 +4,15 @@ import Utlis
 import android.content.Context
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveUser
 import com.matnsolutions.matlive_sdk.utils.kPrint
+import io.livekit.android.AudioOptions
 import io.livekit.android.LiveKit
+import io.livekit.android.LiveKitOverrides
 import io.livekit.android.RoomOptions
 import io.livekit.android.e2ee.BaseKeyProvider
 import io.livekit.android.e2ee.E2EEOptions
-import io.livekit.android.room.Room
 import io.livekit.android.room.track.LocalAudioTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -84,7 +84,10 @@ class MatLiveJoinRoomManger private constructor() {
         _subscription?.cancel()
         _stopAudioStream()
         MatLiveRoomManger.instance.close()
-        coroutineScope.cancel()
+
+//        val foregroundServiceIntent = Intent(application, ForegroundService::class.java)
+//        application.stopService(foregroundServiceIntent)
+//        coroutineScope.cancel()
     }
 
 //    private suspend fun _loadDevices(devices: List<MediaDevice>) {
@@ -116,6 +119,7 @@ class MatLiveJoinRoomManger private constructor() {
 //        }
     }
 
+    //    private  lateinit var application: Application;
     suspend fun connect(
         context: Context,
         token: String,
@@ -126,6 +130,7 @@ class MatLiveJoinRoomManger private constructor() {
         metadata: String? = null,
     ) {
         this.roomId = roomId
+//        this.application = application
         _request.token = token
         currentUser = MatLiveUser(
             name = name,
@@ -147,17 +152,13 @@ class MatLiveJoinRoomManger private constructor() {
                 options = RoomOptions(
                     adaptiveStream = _request.adaptiveStream,
                     dynacast = _request.dynacast,
-//                    audioTrackPublishDefaults = AudioTrackPublishDefaults(
-//                        name = "custom_audio_track_name",
-//                        audioBitrate = AudioPresets.musicHighQualityStereo,
-//                    ),
                     e2eeOptions = e2eeOptions,
-                )
-//                ,overrides = LiveKitOverrides(
-//                    audioOptions = AudioOptions(audioProcessorOptions = audioProcessorOptions),
-//                ),
+                ),
+                overrides = LiveKitOverrides(
+                    audioOptions = AudioOptions(audioProcessorOptions = null),
+                ),
             )
-            room.prepareConnection(_request.url, _request.token)
+//            room.prepareConnection(_request.url, _request.token)
 
             coroutineScope.launch {
                 room.connect(
@@ -168,7 +169,14 @@ class MatLiveJoinRoomManger private constructor() {
 //                )
                 )
             }
-
+            // Start a foreground service to keep the call from being interrupted if the
+            // app goes into the background.
+//            val foregroundServiceIntent = Intent(application, ForegroundService::class.java)
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                application.startForegroundService(foregroundServiceIntent)
+//            } else {
+//                application.startService(foregroundServiceIntent)
+//            }
             MatLiveRoomManger.instance.room = room
 //            MatLiveRoomManger.instance.listener = room.createListener()
             MatLiveRoomManger.instance.setUp(

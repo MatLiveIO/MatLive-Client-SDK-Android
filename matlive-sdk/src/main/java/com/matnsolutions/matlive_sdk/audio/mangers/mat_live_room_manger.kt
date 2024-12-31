@@ -15,15 +15,15 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 
-enum class ParticipantTrackType {
-    kUserMedia,
-    kScreenShare
-}
-
-data class ParticipantTrack(
-    val participant: Participant,
-    val type: ParticipantTrackType = ParticipantTrackType.kUserMedia
-)
+//enum class ParticipantTrackType {
+//    kUserMedia,
+//    kScreenShare
+//}
+//
+//data class ParticipantTrack(
+//    val participant: Participant,
+//    val type: ParticipantTrackType = ParticipantTrackType.kUserMedia
+//)
 
 
 class MatLiveRoomManger : LiveRoomEventManger() {
@@ -34,7 +34,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
     var room: Room? = null
 
     //    private var listener: EventCollector<RoomEvent>? = null
-    var participantTracks = mutableListOf<ParticipantTrack>()
+//    var participantTracks = mutableListOf<ParticipantTrack>()
 
     //    override var messages: MutableStateFlow<List<MatLiveChatMessage>> =
 //        MutableStateFlow(emptyList())
@@ -253,9 +253,9 @@ class MatLiveRoomManger : LiveRoomEventManger() {
 
     private suspend fun _askPublishMute(value: Boolean) {
         if (value) {
-            room?.localParticipant?.setMicrophoneEnabled(true)
-        } else {
             room?.localParticipant?.setMicrophoneEnabled(false)
+        } else {
+            room?.localParticipant?.setMicrophoneEnabled(true)
         }
     }
 

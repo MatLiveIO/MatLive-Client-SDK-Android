@@ -109,6 +109,7 @@ fun AudioRoomScreen(
                     AudioRoomLayout(
                         onTakeMic = { scope.launch { matLiveRoomManger.takeSeat(it) } },
                         onMuteMic = { scope.launch { matLiveRoomManger.muteSeat(it) } },
+                        unMuteMic = { scope.launch { matLiveRoomManger.unMuteSeat(it) } },
                         onRemoveSpeaker = { scope.launch { matLiveRoomManger.removeUserFromSeat(it) } },
                         onLeaveMic = { scope.launch { matLiveRoomManger.leaveSeat(it) } },
                         onSwitchSeat = { scope.launch { matLiveRoomManger.switchSeat(it) } },

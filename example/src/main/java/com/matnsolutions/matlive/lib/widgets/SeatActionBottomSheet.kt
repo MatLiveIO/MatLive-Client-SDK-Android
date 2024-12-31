@@ -26,6 +26,7 @@ fun SeatActionBottomSheet(
     user: MatLiveUser?,
     onTakeMic: (() -> Unit)? = null,
     onMuteMic: (() -> Unit)? = null,
+    unMuteMic: (() -> Unit)? = null,
     onRemoveSpeaker: (() -> Unit)? = null,
     onLeaveMic: (() -> Unit)? = null,
     onLockMic: (() -> Unit)? = null,
@@ -102,7 +103,7 @@ fun SeatActionBottomSheet(
                             icon = Icons.Filled.Mic,
                             label = "UnMute Mic",
                             onTap = {
-                                onMuteMic?.invoke()
+                                unMuteMic?.invoke()
                                 onDismiss()
                             }
                         )

@@ -37,6 +37,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name="com.matnsolutions.matlive_sdk.services.ForegroundService"
+            android:foregroundServiceType="mediaPlayback|camera|microphone"
+            android:exported="false" />
     </application>
 
 </manifest>

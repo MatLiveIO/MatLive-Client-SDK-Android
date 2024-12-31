@@ -197,7 +197,7 @@ class RoomSeatService {
         if (seatIndex == -1 || seatIndex > _maxIndex) return
         val seat = _seatList.value[seatIndex]
         if (seat.currentUser.value != null) {
-            seat.currentUser.value!!.isMicOnNotifier.value = true
+            seat.currentUser.value!!.isMicOnNotifier.value = false
             _liveKitService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
@@ -209,7 +209,7 @@ class RoomSeatService {
         if (seatIndex == -1 || seatIndex > _maxIndex) return
         val seat = _seatList.value[seatIndex]
         if (seat.currentUser.value != null) {
-            seat.currentUser.value!!.isMicOnNotifier.value = false
+            seat.currentUser.value!!.isMicOnNotifier.value = true
             _liveKitService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),

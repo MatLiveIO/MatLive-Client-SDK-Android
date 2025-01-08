@@ -1,6 +1,5 @@
 package com.matnsolutions.matlive_sdk.audio.mangers
 
-import android.R.bool
 import android.util.Log
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRequestTakeMic
@@ -17,17 +16,6 @@ import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 
 
-//enum class ParticipantTrackType {
-//    kUserMedia,
-//    kScreenShare
-//}
-//
-//data class ParticipantTrack(
-//    val participant: Participant,
-//    val type: ParticipantTrackType = ParticipantTrackType.kUserMedia
-//)
-
-
 class MatLiveRoomManger : LiveRoomEventManger() {
     companion object {
         val instance = MatLiveRoomManger()
@@ -35,22 +23,15 @@ class MatLiveRoomManger : LiveRoomEventManger() {
 
     var room: Room? = null
 
-    //    private var listener: EventCollector<RoomEvent>? = null
-//    var participantTracks = mutableListOf<ParticipantTrack>()
 
-    //    override var messages: MutableStateFlow<List<MatLiveChatMessage>> =
-//        MutableStateFlow(emptyList())
     override var inviteRequests: MutableStateFlow<List<MatLiveRequestTakeMic>> =
         MutableStateFlow(emptyList())
     override var seatService: RoomSeatService? = null
-    private var _flagStartedReplayKit = false
     private var _isSetUpped = false
     var onMic = false
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val coroutineMainScope = CoroutineScope(Dispatchers.Main)
 
-//    val fastConnection: Boolean
-//        get() = room?.engine?.fastConnectOptions != null
 
     suspend fun setUp(
         onInvitedToMic: ((Int) -> Unit)?,
@@ -60,34 +41,28 @@ class MatLiveRoomManger : LiveRoomEventManger() {
         seatService = RoomSeatService()
         messages.value = emptyList()
         inviteRequests.value = emptyList()
-        _askPublish(false)
+        askPublish(false)
 
         coroutineScope.launch {
             room?.events?.collect { event ->
                 kPrint("event: $event")
                 when (event) {
                     is RoomEvent.ParticipantConnected -> {
-                        _sortParticipants()
                     }
 
                     is RoomEvent.ParticipantDisconnected -> {
-                        _sortParticipants()
                     }
 
                     is RoomEvent.TrackPublished -> {
-                        _sortParticipants()
                     }
 
                     is RoomEvent.TrackUnpublished -> {
-                        _sortParticipants()
                     }
 
                     is RoomEvent.TrackSubscribed -> {
-                        _sortParticipants()
                     }
 
                     is RoomEvent.TrackUnsubscribed -> {
-                        _sortParticipants()
                     }
 
                     is RoomEvent.TrackStreamStateChanged -> {
@@ -129,11 +104,9 @@ class MatLiveRoomManger : LiveRoomEventManger() {
                     }
 
                     is RoomEvent.RecordingStatusChanged -> {
-//                        kPrint(event.toString())
                     }
 
                     is RoomEvent.RoomMetadataChanged -> {
-//                        kPrint("RoomMetadataChangedEvent ${event.newMetadata}")
                         if (event.newMetadata != null &&
                             event.newMetadata!!.isNotEmpty() &&
                             event.newMetadata!!.contains("seats")
@@ -145,16 +118,12 @@ class MatLiveRoomManger : LiveRoomEventManger() {
                     }
 
                     is RoomEvent.LocalTrackSubscribed -> {
-                        _sortParticipants()
                     }
 
                     is RoomEvent.ParticipantNameChanged -> {
-//                        kPrint("ParticipantNameUpdatedEvent")
-                        _sortParticipants()
                     }
 
                     is RoomEvent.ParticipantMetadataChanged -> {
-//                        kPrint("ParticipantMetadataUpdatedEvent")
                     }
 
                     is RoomEvent.TrackE2EEStateEvent -> {
@@ -162,27 +131,20 @@ class MatLiveRoomManger : LiveRoomEventManger() {
                     }
 
                     is RoomEvent.Reconnecting -> {
-//                        kPrint("RoomAttemptReconnectEvent ")
                     }
 
                     else -> {
-//                        kPrint("unhandled event: $event")
                     }
                 }
             }
         }
 
-        _sortParticipants()
-
-//        if (LiveKit.platformType == LiveKit.PlatformType.ANDROID) {
-//            // Hardware.instance.setSpeakerphoneOn(true) // TODO: Implement Hardware class
-//        }
 
         _isSetUpped = true
     }
 
     suspend fun close() {
-        _askPublish(false);
+        askPublish(false);
         _isSetUpped = false
         onMic = false;
         seatService?.clear()
@@ -195,7 +157,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
     }
 
     suspend fun takeSeat(seatIndex: Int) {
-        _askPublish(true)
+        askPublish(true)
         onMic = true;
         seatService?.takeSeat(
             seatIndex,
@@ -213,7 +175,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
 
     suspend fun leaveSeat(seatIndex: Int) {
         onMic = false;
-        _askPublish(false)
+        askPublish(false)
         seatService?.leaveSeat(
             seatIndex,
             MatLiveJoinRoomManger.instance.currentUser!!.userId
@@ -230,14 +192,14 @@ class MatLiveRoomManger : LiveRoomEventManger() {
     }
 
     suspend fun muteSeat(seatIndex: Int) {
-        _askPublishMute(true)
+        askPublishMute(true)
         Log.e("Mute", "muteSeat")
         seatService?.muteSeat(seatIndex)
     }
 
     suspend fun unMuteSeat(seatIndex: Int) {
         kPrint("unMuteSeat")
-        _askPublishMute(false)
+        askPublishMute(false)
         seatService?.unMuteSeat(seatIndex)
     }
 
@@ -262,7 +224,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
         kPrint("switchSeat")
     }
 
-    private suspend fun _askPublishMute(value: Boolean) {
+    private suspend fun askPublishMute(value: Boolean) {
         if (value) {
             room?.localParticipant?.setMicrophoneEnabled(false)
         } else {
@@ -270,71 +232,8 @@ class MatLiveRoomManger : LiveRoomEventManger() {
         }
     }
 
-    private suspend fun _askPublish(value: Boolean) {
-        try {
-            if (value) {
-                MatLiveJoinRoomManger.instance.audioTrack?.start()
-            } else {
-                MatLiveJoinRoomManger.instance.audioTrack?.stop()
-            }
-        } catch (error: Exception) {
-            kPrint("could not publish audio: $error")
-        }
+    private suspend fun askPublish(value: Boolean) {
         room?.localParticipant?.setMicrophoneEnabled(value)
         room?.localParticipant?.setCameraEnabled(false)
-    }
-
-    private fun _sortParticipants() {
-//        val userMediaTracks = mutableListOf<ParticipantTrack>()
-//        room?.let { room ->
-//            for (participant in room.remoteParticipants.values) {
-//                for (trackPublication in participant.videoTracks) {
-//                    if (!trackPublication.isScreenShare) {
-//                        userMediaTracks.add(ParticipantTrack(participant = participant))
-//                    }
-//                }
-//            }
-//
-//            userMediaTracks.sortWith(compareBy<ParticipantTrack> {
-//                if (it.participant.isSpeaking) {
-//                    -it.participant.audioLevel
-//                } else {
-//                    0f
-//                }
-//            }.thenComparing { a, b ->
-//                val aSpokeAt = a.participant.lastSpokeAt ?: 0
-//                val bSpokeAt = b.participant.lastSpokeAt ?: 0
-//                when {
-//                    aSpokeAt != bSpokeAt -> -aSpokeAt.compareTo(bSpokeAt)
-//                    a.participant.videoTrackPublications.isNotEmpty() != b.participant.videoTrackPublications.isNotEmpty() -> if (a.participant.videoTrackPublications.isNotEmpty()) -1 else 1
-//                    else -> a.participant.joinedAt!!.compareTo(b.participant.joinedAt!!)
-//                }
-//            })
-//
-//            val localParticipantTracks = room.localParticipant?.videoTrackPublishDefaults
-//            localParticipantTracks?.let { tracks ->
-//                for (trackPublication in tracks) {
-//                    if (trackPublication.isScreenShare) {
-////                        if (LiveKit.platformType == LiveKit.PlatformType.IOS) {
-////                            if (!_flagStartedReplayKit) {
-////                                _flagStartedReplayKit = true
-////                                // ReplayKitChannel.startReplayKit() // TODO: Implement ReplayKitChannel
-////                            }
-////                        }
-//                    } else {
-////                        if (LiveKit.platformType == LiveKit.PlatformType.IOS) {
-////                            if (_flagStartedReplayKit) {
-////                                _flagStartedReplayKit = false
-////                                // ReplayKitChannel.closeReplayKit() // TODO: Implement ReplayKitChannel
-////                            }
-////                        }
-//                        room.localParticipant?.let {
-//                            userMediaTracks.add(ParticipantTrack(participant = it))
-//                        }
-//                    }
-//                }
-//            }
-//            participantTracks = userMediaTracks
-//        }
     }
 }

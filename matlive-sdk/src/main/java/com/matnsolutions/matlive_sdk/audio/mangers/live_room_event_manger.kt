@@ -16,7 +16,6 @@ import java.nio.charset.StandardCharsets
 open class LiveRoomEventManger {
     open var seatService: RoomSeatService? = null
 
-    //    private val _messages = MutableStateFlow<List<MatLiveChatMessage>>(emptyList())
     open val messages: MutableStateFlow<List<MatLiveChatMessage>> =
         MutableStateFlow(emptyList())
     private val _inviteRequests = MutableStateFlow<List<MatLiveRequestTakeMic>>(emptyList())

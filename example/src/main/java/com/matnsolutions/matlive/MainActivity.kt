@@ -10,8 +10,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.matnsolutions.matlive.lib.screens.AudioRoomScreen
-import com.matnsolutions.matlive.lib.screens.HomeScreen
+import com.matnsolutions.matlive.ui.AudioRoomScreen
+import com.matnsolutions.matlive.ui.HomeScreen
 import com.matnsolutions.matlive.util.requestNeededPermissions
 import com.matnsolutions.matlive_sdk.utils.kPrint
 

@@ -15,14 +15,15 @@ import java.nio.charset.StandardCharsets
 
 open class LiveRoomEventManger {
     open var seatService: RoomSeatService? = null
-//    private val _messages = MutableStateFlow<List<MatLiveChatMessage>>(emptyList())
-    open val messages:  MutableStateFlow<List<MatLiveChatMessage>> =
-    MutableStateFlow(emptyList())
+
+    //    private val _messages = MutableStateFlow<List<MatLiveChatMessage>>(emptyList())
+    open val messages: MutableStateFlow<List<MatLiveChatMessage>> =
+        MutableStateFlow(emptyList())
     private val _inviteRequests = MutableStateFlow<List<MatLiveRequestTakeMic>>(emptyList())
     open val inviteRequests: StateFlow<List<MatLiveRequestTakeMic>> = _inviteRequests.asStateFlow()
 
 
-    fun receivedData(
+    suspend fun receivedData(
         data: Map<String, Any>,
         onInvitedToMic: ((Int) -> Unit)? = null,
         onSendGift: ((String) -> Unit)? = null
@@ -46,17 +47,31 @@ open class LiveRoomEventManger {
                         roomId = data["roomId"] as String
                     )
                 }
+
+                MatLiveEvents.removeUserFromSeat -> {
+                    if (data["userId"] == MatLiveJoinRoomManger.instance.currentUser?.userId) {
+                        MatLiveJoinRoomManger.instance.audioTrack?.stop()
+                        MatLiveRoomManger.instance.room?.localParticipant?.setMicrophoneEnabled(
+                            false
+                        )
+                        MatLiveRoomManger.instance.onMic = false
+                    }
+                }
+
                 MatLiveEvents.clearChat -> {
                     messages.value = emptyList()
                 }
+
                 MatLiveEvents.inviteUserToTakeMic -> {
                     if (MatLiveJoinRoomManger.instance.currentUser?.userId == data["userId"] && onInvitedToMic != null) {
                         onInvitedToMic(data["seatIndex"] as Int)
                     }
                 }
+
                 MatLiveEvents.sendGift -> {
                     onSendGift?.invoke(data["gift"] as String)
                 }
+
                 MatLiveEvents.requestTakeMic -> {
                     _inviteRequests.value += MatLiveRequestTakeMic(
                         user = matUser,
@@ -67,7 +82,8 @@ open class LiveRoomEventManger {
         } catch (e: Exception) {
             kPrint("Error handling data received: $e")
             val stackTraceString = e.stackTraceToString()
-            Log.e("MyTag", "Error: $stackTraceString")        }
+            Log.e("MyTag", "Error: $stackTraceString")
+        }
     }
 
 
@@ -137,4 +153,15 @@ open class LiveRoomEventManger {
             )
         )
     }
+
+    suspend fun removeSpeaker(seatIndex: Int, userId: String) {
+        publish(
+            data = mapOf(
+                "event" to MatLiveEvents.removeUserFromSeat,
+                "seatIndex" to seatIndex,
+                "userId" to userId
+            )
+        )
+    }
+
 }

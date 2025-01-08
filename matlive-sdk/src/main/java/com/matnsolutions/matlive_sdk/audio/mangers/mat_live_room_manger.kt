@@ -1,5 +1,7 @@
 package com.matnsolutions.matlive_sdk.audio.mangers
 
+import android.R.bool
+import android.util.Log
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRequestTakeMic
 import com.matnsolutions.matlive_sdk.audio.seats.RoomSeatService
@@ -7,13 +9,13 @@ import com.matnsolutions.matlive_sdk.utils.kPrint
 import io.livekit.android.events.RoomEvent
 import io.livekit.android.events.collect
 import io.livekit.android.room.Room
-import io.livekit.android.room.participant.Participant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.nio.charset.StandardCharsets
+
 
 //enum class ParticipantTrackType {
 //    kUserMedia,
@@ -43,6 +45,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
     override var seatService: RoomSeatService? = null
     private var _flagStartedReplayKit = false
     private var _isSetUpped = false
+    var onMic = false
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val coroutineMainScope = CoroutineScope(Dispatchers.Main)
 
@@ -179,7 +182,9 @@ class MatLiveRoomManger : LiveRoomEventManger() {
     }
 
     suspend fun close() {
+        _askPublish(false);
         _isSetUpped = false
+        onMic = false;
         seatService?.clear()
         messages.value = emptyList()
         inviteRequests.value = emptyList()
@@ -191,6 +196,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
 
     suspend fun takeSeat(seatIndex: Int) {
         _askPublish(true)
+        onMic = true;
         seatService?.takeSeat(
             seatIndex,
             MatLiveJoinRoomManger.instance.currentUser!!
@@ -206,6 +212,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
     }
 
     suspend fun leaveSeat(seatIndex: Int) {
+        onMic = false;
         _askPublish(false)
         seatService?.leaveSeat(
             seatIndex,
@@ -224,6 +231,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
 
     suspend fun muteSeat(seatIndex: Int) {
         _askPublishMute(true)
+        Log.e("Mute", "muteSeat")
         seatService?.muteSeat(seatIndex)
     }
 
@@ -235,7 +243,10 @@ class MatLiveRoomManger : LiveRoomEventManger() {
 
     suspend fun removeUserFromSeat(seatIndex: Int) {
         kPrint("removeUserFromSeat")
-        seatService?.removeUserFromSeat(seatIndex)
+        val userId = seatService?.removeUserFromSeat(seatIndex)
+        if (userId != null) {
+            super.removeSpeaker(seatIndex, userId)
+        }
     }
 
     suspend fun switchSeat(toSeatIndex: Int) {

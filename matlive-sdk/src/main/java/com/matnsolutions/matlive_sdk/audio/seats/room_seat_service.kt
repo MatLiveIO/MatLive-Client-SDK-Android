@@ -23,7 +23,7 @@ class RoomSeatService {
 
     private val roomId: String get() = MatLiveJoinRoomManger.instance.roomId
     var layoutConfig: MatLiveAudioRoomLayoutConfig? = null
-    private val _liveKitService = LiveKitService(baseUrl = "https://tkstg.t-wasel.com")
+    private val _liveKitService = LiveKitService()
 
     fun initWithConfig(config: MatLiveAudioRoomLayoutConfig) {
         layoutConfig = config
@@ -217,9 +217,10 @@ class RoomSeatService {
         }
     }
 
-    suspend fun removeUserFromSeat(seatIndex: Int) {
-        if (seatIndex == -1 || seatIndex > _maxIndex) return
+    suspend fun removeUserFromSeat(seatIndex: Int): String? {
+        if (seatIndex == -1 || seatIndex > _maxIndex) return null
         val seat = _seatList.value[seatIndex]
+        val userId = seat.currentUser.value?.userId
         if (seat.currentUser.value != null) {
             seat.currentUser.value = null
             _liveKitService.updateRoomMetadata(
@@ -227,6 +228,7 @@ class RoomSeatService {
                 metadata = getSeatInfo(),
             )
         }
+        return userId
     }
 
     private suspend fun _leaveSeatIfHave() {

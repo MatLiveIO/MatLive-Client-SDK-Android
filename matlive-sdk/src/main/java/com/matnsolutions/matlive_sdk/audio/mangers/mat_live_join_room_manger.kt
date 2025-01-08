@@ -12,6 +12,7 @@ import io.livekit.android.audio.AudioProcessorOptions
 import io.livekit.android.audio.AudioSwitchHandler
 import io.livekit.android.e2ee.BaseKeyProvider
 import io.livekit.android.e2ee.E2EEOptions
+import io.livekit.android.room.participant.AudioTrackPublishDefaults
 import io.livekit.android.room.track.LocalAudioTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,13 +38,10 @@ class MatLiveJoinRoomManger private constructor() {
 
     private val _request = JoinRequest()
 
-    //    private var _audioInputs: List<MediaDevice> = emptyList()
-    private var _subscription: kotlinx.coroutines.Job? = null
     var currentUser: MatLiveUser? = null
     var audioTrack: LocalAudioTrack? = null
     var roomId: String = ""
 
-    //    private var _selectedAudioDevice: MediaDevice? = null
     var onInvitedToMic: ((Int) -> Unit)? = null
     var onSendGift: ((String) -> Unit)? = null
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
@@ -55,73 +53,29 @@ class MatLiveJoinRoomManger private constructor() {
         _request.url = Utlis.url
         this.onInvitedToMic = onInvitedToMic
         this.onSendGift = onSendGift
-//        if (lkPlatformIs(PlatformType.android)) {
-//            _checkPermissions()
-//        }
-//        if (lkPlatformIsMobile()) {
-//            LiveKitClient.initialize(bypassVoiceProcessing = true)
-//        }
-//        _subscription = coroutineScope.launch {
-//            Hardware.instance.onDeviceChange.collect {
-//                _loadDevices(it)
-//            }
-//        }
-//        _loadDevices(Hardware.instance.enumerateDevices())
+//        initLocalAudioTrack();
     }
 
-    private suspend fun _checkPermissions() {
-//        val permissions = arrayOf(
-//            Manifest.permission.BLUETOOTH,
-//            Manifest.permission.BLUETOOTH_CONNECT,
-//            Manifest.permission.RECORD_AUDIO
+
+//    suspend fun initLocalAudioTrack() {
+//        audioTrack = LocalAudioTrack(
+//            AudioCaptureOptions(
+//                noiseSuppression = true, echoCancellation = true
+//            )
 //        )
-//
-//        permissions.forEach { permission ->
-//            if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-//                // TODO: Handle permission request here, for now just print
-//                kPrint("Permission $permission not granted")
-//            }
-//        }
-    }
+//    }
 
     suspend fun close() {
-        _subscription?.cancel()
         _stopAudioStream()
         MatLiveRoomManger.instance.close()
-
-//        val foregroundServiceIntent = Intent(application, ForegroundService::class.java)
-//        application.stopService(foregroundServiceIntent)
-//        coroutineScope.cancel()
     }
 
-//    private suspend fun _loadDevices(devices: List<MediaDevice>) {
-//        _audioInputs = devices.filter { it.kind == "audioinput" }
-//
-//        if (_audioInputs.isNotEmpty()) {
-//            if (_selectedAudioDevice == null) {
-//                _selectedAudioDevice = _audioInputs.first()
-//                _changeLocalAudioTrack()
-//            }
-//        }
-//    }
 
     private suspend fun _stopAudioStream() {
         audioTrack?.stop()
         audioTrack = null
     }
 
-    private suspend fun _changeLocalAudioTrack() {
-//        audioTrack?.stop()
-//        audioTrack = null
-//
-//        _selectedAudioDevice?.let {
-//            audioTrack = LocalAudioTrack(
-//                AudioCaptureOptions(
-//                    deviceId = it.deviceId,
-//                )
-//            )
-//        }
-    }
 
     //    private  lateinit var application: Application;
     suspend fun connect(
@@ -157,6 +111,7 @@ class MatLiveJoinRoomManger private constructor() {
                     adaptiveStream = _request.adaptiveStream,
                     dynacast = _request.dynacast,
                     e2eeOptions = e2eeOptions,
+//                    audioTrackPublishDefaults = AudioTrackPublishDefaults(audioBitrate = 3200)
                 ),
                 overrides = LiveKitOverrides(
                     audioOptions = AudioOptions(audioProcessorOptions = AudioProcessorOptions()),

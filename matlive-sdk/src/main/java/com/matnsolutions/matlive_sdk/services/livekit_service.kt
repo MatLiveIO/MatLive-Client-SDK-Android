@@ -17,20 +17,21 @@ data class UpdateMetadataRequest(
 
 // Retrofit interface for API calls
 interface LiveKitApi {
-    @POST("livekit/create-room")
+    @POST("rooms/create-room")
     suspend fun createRoom(@Body request: CreateRoomRequest): Response<Map<String, Any>>
 
-    @PUT("livekit/room-metadata")
+    @PUT("rooms/room-metadata")
     suspend fun updateRoomMetadata(@Body request: UpdateMetadataRequest): Response<Map<String, Any>>
 
-    @GET("livekit/token")
+    @GET("rooms/token")
     suspend fun createToken(
         @Query("identity") identity: String,
         @Query("room") room: String
     ): Response<Map<String, Any>>
 }
 
-class LiveKitService(baseUrl: String) {
+class LiveKitService() {
+    private val baseUrl = "https://webapi.dev.ml.matnsolutions.co/"
     private val retrofit = RetrofitClient.getInstance(baseUrl)
     private val api = retrofit.create(LiveKitApi::class.java)
 

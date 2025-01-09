@@ -7,30 +7,21 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
 import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveJoinRoomManger
-import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
-import com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutConfig
-import com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutRowConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,51 +30,24 @@ import kotlinx.coroutines.launch
 @Composable
 fun AudioRoomScreen(
     roomId: String,
-    token: String,
     avatar: String,
     userName: String,
     userId: String,
 ) {
-    val matLiveRoomManger = MatLiveRoomManger.instance
-    var loading by remember { mutableStateOf(true) }
+    val viewModel: AudioRoomViewModel = viewModel()
     val controller = remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
-    val context = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(Unit) {
-        MatLiveJoinRoomManger.instance.init(
-            onInvitedToMic = {},
-            onSendGift = {}
-        )
-        MatLiveJoinRoomManger.instance.connect(
-            context = context,
-            roomId = roomId,
-            token = token,
-            name = userName,
-            avatar = avatar,
-            userId = userId,
-            metadata = "{userRome:\"admin\"}"
-        )
-
-        val seatService = MatLiveRoomManger.instance.seatService
-        seatService?.initWithConfig(
-            MatLiveAudioRoomLayoutConfig(
-                rowSpacing = 16.0,
-                rowConfigs = listOf(
-                    MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12),
-                    MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12)
-                )
-            )
-        )
-
-        loading = false
+        viewModel.init(context, roomId,  userName, avatar, userId)
     }
     DisposableEffect(Unit) {
         onDispose {
             Log.e("DisposableEffect", "DisposableEffect")
-            CoroutineScope(Dispatchers.Main).launch {
-                MatLiveJoinRoomManger.instance.close()
-            }
+//            CoroutineScope(Dispatchers.Main).launch {
+//                MatLiveJoinRoomManger.instance.close()
+//            }
         }
     }
     Scaffold(
@@ -97,24 +61,17 @@ fun AudioRoomScreen(
         }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
-            if (loading) {
+            if (viewModel.loading.value) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 }
             } else {
                 Column(modifier = Modifier.padding(vertical = 21.dp)) {
                     AudioRoomLayout(
-                        onTakeMic = { scope.launch { matLiveRoomManger.takeSeat(it) } },
-                        onMuteMic = { scope.launch { matLiveRoomManger.muteSeat(it) } },
-                        unMuteMic = { scope.launch { matLiveRoomManger.unMuteSeat(it) } },
-                        onRemoveSpeaker = { scope.launch { matLiveRoomManger.removeUserFromSeat(it) } },
-                        onLeaveMic = { scope.launch { matLiveRoomManger.leaveSeat(it) } },
-                        onSwitchSeat = { scope.launch { matLiveRoomManger.switchSeat(it) } },
-                        onLockMic = { scope.launch { matLiveRoomManger.lockSeat(it) } },
-                        onUnLockMic = { scope.launch { matLiveRoomManger.unLockSeat(it) } }
+                        viewModel = viewModel,
                     )
 
-                    val messages by matLiveRoomManger.messages.collectAsState()
+                    val messages by viewModel.messages.collectAsState()
 
                     Box(modifier = Modifier.weight(1f)) {
                         LazyColumn(
@@ -142,7 +99,7 @@ fun AudioRoomScreen(
                         IconButton(onClick = {
                             if (controller.value.isNotEmpty()) {
                                 scope.launch {
-                                    matLiveRoomManger.sendMessage(controller.value)
+                                    viewModel.sendMessage(controller.value)
                                     controller.value = ""
                                 }
                             }

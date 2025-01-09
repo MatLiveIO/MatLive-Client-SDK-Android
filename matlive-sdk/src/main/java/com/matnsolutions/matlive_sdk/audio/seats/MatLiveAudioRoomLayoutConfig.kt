@@ -11,12 +11,3 @@ data class MatLiveAudioRoomLayoutConfig(
         return "rowSpacing:$rowSpacing, rowConfigs:${rowConfigs.toString()}"
     }
 }
-
-data class MatLiveAudioRoomLayoutRowConfig(
-    var count: Int = 5,
-    var seatSpacing: Int = 0
-) {
-    override fun toString(): String {
-        return "row config:{count:$count, spacing:$seatSpacing}"
-    }
-}

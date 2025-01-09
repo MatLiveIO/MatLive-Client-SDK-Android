@@ -50,10 +50,10 @@ open class LiveRoomEventManger {
                 MatLiveEvents.removeUserFromSeat -> {
                     if (data["userId"] == MatLiveJoinRoomManger.instance.currentUser?.userId) {
                         MatLiveJoinRoomManger.instance.audioTrack?.stop()
-                        MatLiveRoomManger.instance.room?.localParticipant?.setMicrophoneEnabled(
+                        MatLiveJoinRoomManger.instance.room?.localParticipant?.setMicrophoneEnabled(
                             false
                         )
-                        MatLiveRoomManger.instance.onMic = false
+                        MatLiveJoinRoomManger.instance.onMic = false
                     }
                 }
 
@@ -87,7 +87,7 @@ open class LiveRoomEventManger {
 
 
     private suspend fun publish(data: Map<String, Any>) {
-        val room = MatLiveRoomManger.instance.room
+        val room = MatLiveJoinRoomManger.instance.room
         if (room != null) {
             val jsonObject = JSONObject(data)
 

@@ -1,28 +1,49 @@
 package com.matnsolutions.matlive_sdk.audio.mangers
 
+import com.matnsolutions.matlive_sdk.services.Utils
+import android.content.Context
 import android.util.Log
+import com.matnsolutions.matlive_sdk.audio.define.JoinRequest
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRequestTakeMic
+import com.matnsolutions.matlive_sdk.audio.define.MatLiveUser
 import com.matnsolutions.matlive_sdk.audio.seats.RoomSeatService
+import com.matnsolutions.matlive_sdk.services.MatLiveService
 import com.matnsolutions.matlive_sdk.utils.kPrint
+import io.livekit.android.AudioOptions
+import io.livekit.android.LiveKit
+import io.livekit.android.LiveKitOverrides
+import io.livekit.android.RoomOptions
+import io.livekit.android.audio.AudioProcessorOptions
+import io.livekit.android.audio.AudioSwitchHandler
+import io.livekit.android.e2ee.BaseKeyProvider
+import io.livekit.android.e2ee.E2EEOptions
 import io.livekit.android.events.RoomEvent
 import io.livekit.android.events.collect
 import io.livekit.android.room.Room
+import io.livekit.android.room.participant.AudioTrackPublishDefaults
+import io.livekit.android.room.track.LocalAudioTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 
 
-class MatLiveRoomManger : LiveRoomEventManger() {
+class MatLiveJoinRoomManger private constructor() : LiveRoomEventManger() {
     companion object {
-        val instance = MatLiveRoomManger()
+        val instance: MatLiveJoinRoomManger by lazy { MatLiveJoinRoomManger() }
     }
 
-    var room: Room? = null
+    private val matLiveService = MatLiveService()
+    private val _request = JoinRequest()
 
+    var currentUser: MatLiveUser? = null
+    var audioTrack: LocalAudioTrack? = null
+    var roomId: String = ""
+    var room: Room? = null
 
     override var inviteRequests: MutableStateFlow<List<MatLiveRequestTakeMic>> =
         MutableStateFlow(emptyList())
@@ -32,6 +53,85 @@ class MatLiveRoomManger : LiveRoomEventManger() {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val coroutineMainScope = CoroutineScope(Dispatchers.Main)
 
+    var onInvitedToMic: ((Int) -> Unit)? = null
+    var onSendGift: ((String) -> Unit)? = null
+
+    fun init(
+        onInvitedToMic: ((Int) -> Unit)?,
+        onSendGift: ((String) -> Unit)?,
+    ) {
+        _request.url = Utils.url
+        this.onInvitedToMic = onInvitedToMic
+        this.onSendGift = onSendGift
+//        initLocalAudioTrack();
+    }
+
+    suspend fun connect(
+        context: Context,
+        appKey: String,
+        name: String,
+        avatar: String,
+        userId: String,
+        roomId: String,
+        metadata: String? = null,
+    ) {
+
+
+        joinRoom(roomId, appKey) { newId, token ->
+            _request.token = token
+            this.roomId = newId
+        }
+
+        currentUser = MatLiveUser(
+            name = name,
+            avatar = avatar,
+            userId = userId,
+            roomId = userId,
+            metadata = metadata,
+        )
+        try {
+            var e2eeOptions: E2EEOptions? = null
+            if (_request.e2ee && _request.e2eeKey != null) {
+                val keyProvider = BaseKeyProvider()
+                e2eeOptions = E2EEOptions(keyProvider = keyProvider)
+                keyProvider.setKey(key = _request.e2eeKey, participantId = userId)
+            }
+
+            room = LiveKit.create(
+                appContext = context,
+                options = RoomOptions(
+                    adaptiveStream = _request.adaptiveStream,
+                    dynacast = _request.dynacast,
+                    e2eeOptions = e2eeOptions,
+                    audioTrackPublishDefaults = AudioTrackPublishDefaults(audioBitrate = 3200)
+                ),
+                overrides = LiveKitOverrides(
+                    audioOptions = AudioOptions(audioProcessorOptions = AudioProcessorOptions()),
+                ),
+            )
+            room?.prepareConnection(_request.url, _request.token)
+
+            coroutineScope.launch {
+                room?.connect(
+                    _request.url,
+                    _request.token,
+//                options = ConnectOptions(
+//                    microphone = TrackOption(track = audioTrack),
+//                )
+                )
+            }
+            setUp(onInvitedToMic, onSendGift)
+
+            delay(1000)
+            val audioHandler = room?.audioHandler as? AudioSwitchHandler
+            audioHandler?.let {
+                it.selectDevice(it.availableAudioDevices.last())
+            }
+        } catch (error: Exception) {
+            kPrint("Could not connect $error")
+            throw Exception("Failed to update metadata: $error");
+        }
+    }
 
     suspend fun setUp(
         onInvitedToMic: ((Int) -> Unit)?,
@@ -66,13 +166,6 @@ class MatLiveRoomManger : LiveRoomEventManger() {
                     }
 
                     is RoomEvent.TrackStreamStateChanged -> {
-//                        kPrint(event.toString())
-                        //                        if (!room.canPlaybackAudio) {
-                        //                            kPrint("AudioPlaybackStatusChanged Audio playback failed")
-                        //                            scope.launch {
-                        //                                room.startAudio()
-                        //                            }
-                        //                        }
                     }
 
                     is RoomEvent.DataReceived -> {
@@ -81,9 +174,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
                             val jsonObject = JSONObject(jsonString)
                             val map = mutableMapOf<String, Any>()
 
-                            // Convert JSONObject to Map<String, String>
                             for (key in jsonObject.keys()) {
-                                // Get value as string, handling potential null values
                                 val value = jsonObject.opt(key) ?: continue
                                 map[key] = value
                             }
@@ -100,7 +191,6 @@ class MatLiveRoomManger : LiveRoomEventManger() {
                     }
 
                     is RoomEvent.Disconnected -> {
-//                        kPrint("RoomDisconnectedEvent ${event.reason}")
                     }
 
                     is RoomEvent.RecordingStatusChanged -> {
@@ -138,22 +228,27 @@ class MatLiveRoomManger : LiveRoomEventManger() {
                 }
             }
         }
-
-
         _isSetUpped = true
     }
 
-    suspend fun close() {
-        askPublish(false);
-        _isSetUpped = false
-        onMic = false;
-        seatService?.clear()
-        messages.value = emptyList()
-        inviteRequests.value = emptyList()
-//        listener?.dispose()
-        room?.disconnect()
-        room?.release()
-        room = null
+    fun close() {
+        CoroutineScope(Dispatchers.Main).launch {
+            askPublish(false);
+            _isSetUpped = false
+            onMic = false;
+            seatService?.clear()
+            messages.value = emptyList()
+            inviteRequests.value = emptyList()
+            room?.disconnect()
+            room?.release()
+            room = null
+        }
+
+    }
+
+    private suspend fun _stopAudioStream() {
+        audioTrack?.stop()
+        audioTrack = null
     }
 
     suspend fun takeSeat(seatIndex: Int) {
@@ -161,7 +256,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
         onMic = true;
         seatService?.takeSeat(
             seatIndex,
-            MatLiveJoinRoomManger.instance.currentUser!!
+            instance.currentUser!!
         )
     }
 
@@ -178,14 +273,14 @@ class MatLiveRoomManger : LiveRoomEventManger() {
         askPublish(false)
         seatService?.leaveSeat(
             seatIndex,
-            MatLiveJoinRoomManger.instance.currentUser!!.userId
+            instance.currentUser!!.userId
         )
     }
 
     override suspend fun sendMessage(message: String) {
         messages.value += MatLiveChatMessage(
-            roomId = MatLiveJoinRoomManger.instance.roomId,
-            user = MatLiveJoinRoomManger.instance.currentUser!!,
+            roomId = this.roomId,
+            user = currentUser!!,
             message = message,
         )
         super.sendMessage(message)
@@ -212,7 +307,7 @@ class MatLiveRoomManger : LiveRoomEventManger() {
     }
 
     suspend fun switchSeat(toSeatIndex: Int) {
-        val userId = MatLiveJoinRoomManger.instance.currentUser!!.userId
+        val userId = currentUser!!.userId
         val seatId =
             seatService?.seatList?.value?.indexOfFirst { it.currentUser.value?.userId == userId }
         if (seatId == null || seatId == -1) return
@@ -236,4 +331,33 @@ class MatLiveRoomManger : LiveRoomEventManger() {
         room?.localParticipant?.setMicrophoneEnabled(value)
         room?.localParticipant?.setCameraEnabled(false)
     }
+
+    private suspend fun joinRoom(
+        roomId: String,
+        appKey: String,
+        onSuccess: (String, String) -> Unit
+    ) {
+        try {
+            val tokenResponse = matLiveService.createToken(
+                username = "user_${System.currentTimeMillis()}",
+                roomId = roomId,
+                appKey = appKey
+            )
+            tokenResponse.onSuccess { response ->
+                // Handle success
+                val data = response["data"] as Map<*, *>
+                val token = data["token"] as String
+                val newId = data["newRoomName"] as String
+                println("joinRoom: id $roomId, token $token")
+                onSuccess(newId, token)
+            }.onFailure { error ->
+                // Handle error
+//            println("Error: ${error.message}")
+                throw Exception(error.message)
+            }
+        } catch (e: Exception) {
+            throw Exception(e)
+        }
+    }
+
 }

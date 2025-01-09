@@ -30,15 +30,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.matnsolutions.matlive_sdk.services.LiveKitService
 import com.matnsolutions.matlive_sdk.utils.kPrint
 import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onNavigateToAudioRoom: (roomId: String, token: String, avatar: String, userName: String, userId: String) -> Unit) {
-    val livekitService = remember { LiveKitService() }
+fun HomeScreen(onNavigateToAudioRoom: (roomId: String, avatar: String, userName: String, userId: String) -> Unit) {
+
     var isCreateLoading by remember { mutableStateOf(false) }
     var isJoinLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -84,7 +83,7 @@ fun HomeScreen(onNavigateToAudioRoom: (roomId: String, token: String, avatar: St
                     onClick = {
                         if (!isCreateLoading) {
                             coroutineScope.launch {
-                                createRoom(livekitService) { isCreateLoading = it }
+
                             }
                         }
                     },
@@ -113,26 +112,12 @@ fun HomeScreen(onNavigateToAudioRoom: (roomId: String, token: String, avatar: St
                     onClick = {
                         if (!isJoinLoading) {
                             coroutineScope.launch {
-                                joinRoom(
-                                    livekitService,
-                                    { isJoinLoading = it },
-                                    roomId!!
-                                ) { roomId, token ->
-//                                    val intent = Intent(
-//                                        this@MainActivity,
-//                                        AudioRoomScreen::class.java
-//                                    )
-//                                    intent.putExtra("roomId", roomId)
-//                                    intent.putExtra("token", token)
-//                                    startActivity(intent)
-                                    onNavigateToAudioRoom(
-                                        roomId,
-                                        token,
-                                        "https://img-cdn.pixlr.com/image-generator/history/6565c8dff9ef18d69df3e3a2/fe1887b5-015e-4421-8c6a-1364d2f5b1e9/medium.webp",
-                                        "Ahmed Attia",
-                                        "10"
-                                    )
-                                }
+                                onNavigateToAudioRoom(
+                                    roomId,
+                                    "https://img-cdn.pixlr.com/image-generator/history/6565c8dff9ef18d69df3e3a2/fe1887b5-015e-4421-8c6a-1364d2f5b1e9/medium.webp",
+                                    "Ahmed Attia",
+                                    "10"
+                                )
                             }
                         }
                     },
@@ -161,26 +146,26 @@ fun HomeScreen(onNavigateToAudioRoom: (roomId: String, token: String, avatar: St
                     onClick = {
                         if (!isJoinLoading) {
                             coroutineScope.launch {
-                                joinRoom(
-                                    livekitService,
-                                    { isJoinLoading = it },
-                                    roomId!!
-                                ) { roomId, token ->
-//                                    val intent = Intent(
-//                                        this@MainActivity,
-//                                        AudioRoomScreen::class.java
+//                                joinRoom(
+//                                    livekitService,
+//                                    { isJoinLoading = it },
+//                                    roomId!!
+//                                ) { roomId, token ->
+////                                    val intent = Intent(
+////                                        this@MainActivity,
+////                                        AudioRoomScreen::class.java
+////                                    )
+////                                    intent.putExtra("roomId", roomId)
+////                                    intent.putExtra("token", token)
+////                                    startActivity(intent)
+//                                    onNavigateToAudioRoom(
+//                                        roomId,
+//                                        token,
+//                                        "https://img-cdn.pixlr.com/image-generator/history/65772796905f29530816ea40/4ca9ba3d-c418-4153-a36a-77f4182236a7/medium.webp",
+//                                        "Test User2",
+//                                        "12"
 //                                    )
-//                                    intent.putExtra("roomId", roomId)
-//                                    intent.putExtra("token", token)
-//                                    startActivity(intent)
-                                    onNavigateToAudioRoom(
-                                        roomId,
-                                        token,
-                                        "https://img-cdn.pixlr.com/image-generator/history/65772796905f29530816ea40/4ca9ba3d-c418-4153-a36a-77f4182236a7/medium.webp",
-                                        "Test User2",
-                                        "12"
-                                    )
-                                }
+//                                }
                             }
                         }
                     },
@@ -205,53 +190,55 @@ fun HomeScreen(onNavigateToAudioRoom: (roomId: String, token: String, avatar: St
     }
 }
 
-var roomId: String? = "room_2"
-private suspend fun createRoom(
-    livekitService: LiveKitService,
-    setLoading: (Boolean) -> Unit
-) {
-    setLoading(true)
-    try {
-        val roomResponse = livekitService.createRoom("test_room")
-        roomResponse.onSuccess { response ->
-            // Handle success
-            roomId = (response["data"] as Map<*, *>)["sid"] as String
-            println("Room created: id $roomId")
-        }.onFailure { error ->
-            // Handle error
-            println("Error: ${error.message}")
-        }
-    } catch (e: Exception) {
-        kPrint(data = "Error: $e")
-    } finally {
-        setLoading(false)
-    }
-}
-
-private suspend fun joinRoom(
-    livekitService: LiveKitService,
-    setLoading: (Boolean) -> Unit,
-    roomId: String,
-    onSuccess: (String, String) -> Unit
-) {
-    setLoading(true)
-    try {
-        val tokenResponse = livekitService.createToken(
-            username = "user_${System.currentTimeMillis()}",
-            roomId = roomId
-        )
-        tokenResponse.onSuccess { response ->
-            // Handle success
-            val token = response["data"] as String
-            println("joinRoom: id $roomId, token $token")
-            onSuccess(roomId, token)
-        }.onFailure { error ->
-            // Handle error
-            println("Error: ${error.message}")
-        }
-    } catch (e: Exception) {
-        kPrint(data = "Error: $e")
-    } finally {
-        setLoading(false)
-    }
-}
+var roomId: String = "room_2"
+//private suspend fun createRoom(
+//    livekitService: LiveKitService,
+//    setLoading: (Boolean) -> Unit
+//) {
+//    setLoading(true)
+//    try {
+//        val roomResponse = livekitService.createRoom("test_room")
+//        roomResponse.onSuccess { response ->
+//            // Handle success
+//            roomId = (response["data"] as Map<*, *>)["sid"] as String
+//            println("Room created: id $roomId")
+//        }.onFailure { error ->
+//            // Handle error
+//            println("Error: ${error.message}")
+//        }
+//    } catch (e: Exception) {
+//        kPrint(data = "Error: $e")
+//    } finally {
+//        setLoading(false)
+//    }
+//}
+//
+//private suspend fun joinRoom(
+//    livekitService: LiveKitService,
+//    setLoading: (Boolean) -> Unit,
+//    roomId: String,
+//    onSuccess: (String, String) -> Unit
+//) {
+//    setLoading(true)
+//    try {
+//        val tokenResponse = livekitService.createToken(
+//            username = "user_${System.currentTimeMillis()}",
+//            roomId = roomId,
+//            appKey = "\$2b\$10\$e6xwXI/OuJBS8XSMT2V.ROye2ideAywvCdLtjBSvmKttwd0DwkInW"
+//        )
+//        tokenResponse.onSuccess { response ->
+//            // Handle success
+//            val token = (response["data"] as Map<*, *>)["token"] as String
+//            println("joinRoom: id $roomId, token $token")
+//            onSuccess(roomId, token)
+//        }.onFailure { error ->
+//            // Handle error
+////            println("Error: ${error.message}")
+//            throw Exception(error.message)
+//        }
+//    } catch (e: Exception) {
+//        kPrint(data = "Error: $e")
+//    } finally {
+//        setLoading(false)
+//    }
+//}

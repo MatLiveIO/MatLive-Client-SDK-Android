@@ -17,23 +17,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat
-import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveJoinRoomManger
-import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SeatActionBottomSheet(
     showBottomSheet: Boolean,
-    seat: MatLiveRoomAudioSeat,
-    onTakeMic: (() -> Unit)? = null,
-    onMuteMic: (() -> Unit)? = null,
-    unMuteMic: (() -> Unit)? = null,
-    onRemoveSpeaker: (() -> Unit)? = null,
-    onLeaveMic: (() -> Unit)? = null,
-    onLockMic: (() -> Unit)? = null,
-    onUnLockMic: (() -> Unit)? = null,
-    onSwitch: (() -> Unit)? = null,
+    seat: com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat,
+    seatIndex: Int,
+    audioRoomViewModel: AudioRoomViewModel,
     onDismiss: () -> Unit,
 ) {
     if (showBottomSheet) {
@@ -54,22 +46,22 @@ fun SeatActionBottomSheet(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (seat.currentUser.value == null) {
-                    if (!MatLiveRoomManger.instance.onMic && !seat.isLocked.value!!) {
+                    if (!audioRoomViewModel.matLiveRoomManger.onMic && !seat.isLocked.value!!) {
                         ActionButton(
                             icon = Icons.Filled.Mic,
                             label = "Take Mic",
                             onTap = {
-                                onTakeMic?.invoke()
+                                audioRoomViewModel.takeSeat(seatIndex)
                                 onDismiss()
                             }
                         )
                     }
-                    if (MatLiveRoomManger.instance.onMic && !seat.isLocked.value!!) {
+                    if (audioRoomViewModel.matLiveRoomManger.onMic && !seat.isLocked.value!!) {
                         ActionButton(
                             icon = Icons.Filled.SwapCalls,
                             label = "Switch Mic",
                             onTap = {
-                                onSwitch?.invoke()
+                                audioRoomViewModel.switchSeat(seatIndex)
                                 onDismiss()
                             },
                             isDestructive = true
@@ -80,7 +72,7 @@ fun SeatActionBottomSheet(
                             icon = Icons.Filled.Lock,
                             label = "Lock Mic",
                             onTap = {
-                                onLockMic?.invoke()
+                                audioRoomViewModel.lockSeat(seatIndex)
                                 onDismiss()
                             },
                             isDestructive = true
@@ -90,14 +82,14 @@ fun SeatActionBottomSheet(
                             icon = Icons.Filled.LockOpen,
                             label = "Unlock Mic",
                             onTap = {
-                                onUnLockMic?.invoke()
+                                audioRoomViewModel.unLockSeat(seatIndex)
                                 onDismiss()
                             },
                             isDestructive = true
                         )
                     }
                 } else {
-                    val currentUserId = MatLiveJoinRoomManger.instance.currentUser?.userId
+                    val currentUserId = audioRoomViewModel.matLiveRoomManger.currentUser?.userId
                     val user = seat.currentUser.value!!
                     val isMicOn by user.isMicOnNotifier.observeAsState(initial = false)
                     if (seat.currentUser.value?.userId == currentUserId) {
@@ -106,7 +98,7 @@ fun SeatActionBottomSheet(
                                 icon = Icons.Filled.MicOff,
                                 label = "Mute Mic",
                                 onTap = {
-                                    onMuteMic?.invoke()
+                                    audioRoomViewModel.muteSeat(seatIndex)
                                     onDismiss()
                                 }
                             )
@@ -115,7 +107,7 @@ fun SeatActionBottomSheet(
                                 icon = Icons.Filled.Mic,
                                 label = "UnMute Mic",
                                 onTap = {
-                                    unMuteMic?.invoke()
+                                    audioRoomViewModel.unMuteSeat(seatIndex)
                                     onDismiss()
                                 }
                             )
@@ -124,7 +116,7 @@ fun SeatActionBottomSheet(
                             icon = Icons.Filled.ExitToApp,
                             label = "Leave Mic",
                             onTap = {
-                                onLeaveMic?.invoke()
+                                audioRoomViewModel.leaveSeat(seatIndex)
                                 onDismiss()
                             },
                             isDestructive = true
@@ -134,7 +126,7 @@ fun SeatActionBottomSheet(
                             icon = Icons.Filled.PersonRemove,
                             label = "Remove Speaker",
                             onTap = {
-                                onRemoveSpeaker?.invoke()
+                                audioRoomViewModel.removeUserFromSeat(seatIndex)
                                 onDismiss()
                             },
                             isDestructive = true

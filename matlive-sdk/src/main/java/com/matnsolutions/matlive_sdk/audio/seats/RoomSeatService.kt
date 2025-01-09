@@ -2,10 +2,9 @@ package com.matnsolutions.matlive_sdk.audio.seats
 
 import android.util.Log
 import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveJoinRoomManger
-import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveUser
-import com.matnsolutions.matlive_sdk.services.LiveKitService
+import com.matnsolutions.matlive_sdk.services.MatLiveService
 import com.matnsolutions.matlive_sdk.utils.kPrint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,13 +22,13 @@ class RoomSeatService {
 
     private val roomId: String get() = MatLiveJoinRoomManger.instance.roomId
     var layoutConfig: MatLiveAudioRoomLayoutConfig? = null
-    private val _liveKitService = LiveKitService()
+    private val matLiveService = MatLiveService()
 
     fun initWithConfig(config: MatLiveAudioRoomLayoutConfig) {
         layoutConfig = config
         _seatList.value = emptyList()
         initSeat(config)
-        val metadata = MatLiveRoomManger.instance.room?.metadata
+        val metadata = MatLiveJoinRoomManger.instance.room?.metadata
         seatsFromMetadata(metadata)
     }
 
@@ -62,7 +61,7 @@ class RoomSeatService {
             newSeatList.add(seat)
         }
         _seatList.value = newSeatList
-        _liveKitService.updateRoomMetadata(
+        matLiveService.updateRoomMetadata(
             roomId = roomId,
             metadata = getSeatInfo(),
         )
@@ -95,7 +94,7 @@ class RoomSeatService {
                 }
             }
             _seatList.value = newSeatList
-            _liveKitService.updateRoomMetadata(
+            matLiveService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
             )
@@ -107,7 +106,7 @@ class RoomSeatService {
         val seat = _seatList.value[seatIndex]
         if (seat.seatIndex == seatIndex && seat.currentUser.value == null) {
             seat.currentUser.value = user
-            _liveKitService.updateRoomMetadata(
+            matLiveService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
             )
@@ -136,7 +135,7 @@ class RoomSeatService {
         // Move user to toSeat
         if (tempUser != null) {
             toSeat.currentUser.value = tempUser
-            _liveKitService.updateRoomMetadata(
+            matLiveService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
             )
@@ -150,7 +149,7 @@ class RoomSeatService {
             seat.currentUser.value?.userId == userId
         ) {
             seat.currentUser.value = null
-            _liveKitService.updateRoomMetadata(
+            matLiveService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
             )
@@ -162,7 +161,7 @@ class RoomSeatService {
         val seat = _seatList.value[seatIndex]
         if (seat.currentUser.value == null) {
             seat.isLocked.value = false
-            _liveKitService.updateRoomMetadata(
+            matLiveService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
             )
@@ -174,7 +173,7 @@ class RoomSeatService {
         val seat = _seatList.value[seatIndex]
         if (seat.seatIndex == seatIndex && seat.currentUser.value == null) {
             seat.isLocked.value = false
-            _liveKitService.updateRoomMetadata(
+            matLiveService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
             )
@@ -186,7 +185,7 @@ class RoomSeatService {
         val seat = _seatList.value[seatIndex]
         if (seat.seatIndex == seatIndex && seat.currentUser.value == null) {
             seat.isLocked.value = true
-            _liveKitService.updateRoomMetadata(
+            matLiveService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
             )
@@ -198,7 +197,7 @@ class RoomSeatService {
         val seat = _seatList.value[seatIndex]
         if (seat.currentUser.value != null) {
             seat.currentUser.value!!.isMicOnNotifier.value = false
-            _liveKitService.updateRoomMetadata(
+            matLiveService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
             )
@@ -210,7 +209,7 @@ class RoomSeatService {
         val seat = _seatList.value[seatIndex]
         if (seat.currentUser.value != null) {
             seat.currentUser.value!!.isMicOnNotifier.value = true
-            _liveKitService.updateRoomMetadata(
+            matLiveService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
             )
@@ -223,7 +222,7 @@ class RoomSeatService {
         val userId = seat.currentUser.value?.userId
         if (seat.currentUser.value != null) {
             seat.currentUser.value = null
-            _liveKitService.updateRoomMetadata(
+            matLiveService.updateRoomMetadata(
                 roomId = roomId,
                 metadata = getSeatInfo(),
             )
@@ -236,7 +235,7 @@ class RoomSeatService {
             it.currentUser.value?.userId == MatLiveJoinRoomManger.instance.currentUser?.userId
         }
         seat?.currentUser?.value = null
-        _liveKitService.updateRoomMetadata(
+        matLiveService.updateRoomMetadata(
             roomId = roomId,
             metadata = getSeatInfo(),
         )
@@ -315,11 +314,15 @@ class RoomSeatService {
                     seat.currentUser.value = null
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: org.json.JSONException) {
             // Handle JSON parsing error
             kPrint("seatsFromMetadata error: $e")
-            val stackTraceString = e.stackTraceToString()
-            Log.e("seatsFromMetadata", "Error: $stackTraceString")
+            Log.e("seatsFromMetadata", "JSON parsing error: ${e.message}")
+            return
+        } catch (e: Exception) {
+            // Handle other exceptions
+            kPrint("seatsFromMetadata error: $e")
+            Log.e("seatsFromMetadata", "Unexpected error: ${e.message}")
             return
         }
     }

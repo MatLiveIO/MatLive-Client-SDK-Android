@@ -18,21 +18,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat
-import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
+import com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutConfig
 
 @Composable
 fun AudioRoomLayout(
-    onTakeMic: (Int) -> Unit,
-    onMuteMic: (Int) -> Unit,
-    unMuteMic: (Int) -> Unit,
-    onRemoveSpeaker: (Int) -> Unit,
-    onLeaveMic: (Int) -> Unit,
-    onLockMic: (Int) -> Unit,
-    onUnLockMic: (Int) -> Unit,
-    onSwitchSeat: (Int) -> Unit,
+    viewModel: AudioRoomViewModel,
 ) {
-    val seatService = MatLiveRoomManger.instance.seatService ?: return
+    val seatService = viewModel.matLiveRoomManger.seatService ?: return
     val seats by seatService.seatList.collectAsState()
     val layoutConfig = seatService.layoutConfig ?: return
     Column(
@@ -48,15 +42,8 @@ fun AudioRoomLayout(
                     val seat = seats.getOrNull(globalIndex)!!
                     SeatItem(
                         seat = seat,
-                        onTakeMic = onTakeMic,
-                        onMuteMic = onMuteMic,
-                        unMuteMic = unMuteMic,
-                        onRemoveSpeaker = onRemoveSpeaker,
-                        onLeaveMic = onLeaveMic,
-                        onLockMic = onLockMic,
-                        onUnLockMic = onUnLockMic,
-                        onSwitchSeat = onSwitchSeat,
-                        seatIndex = globalIndex
+                        seatIndex = globalIndex,
+                        viewModel = viewModel
                     )
                 }
             }
@@ -67,15 +54,8 @@ fun AudioRoomLayout(
 @Composable
 private fun SeatItem(
     seat: MatLiveRoomAudioSeat,
-    onTakeMic: (Int) -> Unit,
-    onMuteMic: (Int) -> Unit,
-    unMuteMic: (Int) -> Unit,
-    onRemoveSpeaker: (Int) -> Unit,
-    onLeaveMic: (Int) -> Unit,
-    onLockMic: (Int) -> Unit,
-    onUnLockMic: (Int) -> Unit,
-    onSwitchSeat: (Int) -> Unit,
-    seatIndex: Int
+    seatIndex: Int,
+    viewModel: AudioRoomViewModel
 ) {
     val isLocked by seat.isLocked.observeAsState(initial = false)
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -97,30 +77,15 @@ private fun SeatItem(
             } else {
                 SeatWidget(seat = seat)
             }
-            if (isLocked) {
-                Icon(
-                    Icons.Filled.Lock,
-                    contentDescription = "Seat Locked",
-                    modifier = Modifier
-                        .size(22.dp)
-                        .align(Alignment.Center)
-                )
-            } else {
-                SeatWidget(seat = seat)
-            }
         }
         if (showBottomSheet) {
-            SeatActionBottomSheet(seat = seat,
-                onTakeMic = { onTakeMic(seatIndex) },
-                onMuteMic = { onMuteMic(seatIndex) },
-                unMuteMic = { unMuteMic(seatIndex) },
-                onRemoveSpeaker = { onRemoveSpeaker(seatIndex) },
-                onLeaveMic = { onLeaveMic(seatIndex) },
-                onLockMic = { onLockMic(seatIndex) },
-                onUnLockMic = { onUnLockMic(seatIndex) },
-                onSwitch = { onSwitchSeat(seatIndex) },
+            SeatActionBottomSheet(
+                seat = seat,
+                seatIndex = seatIndex,
+                audioRoomViewModel = viewModel,
                 showBottomSheet = showBottomSheet,
-                onDismiss = { showBottomSheet = false })
+                onDismiss = { showBottomSheet = false }
+            )
         }
     }
 }
@@ -185,7 +150,7 @@ private fun SeatWidget(seat: MatLiveRoomAudioSeat) {
 private fun calculateGlobalIndex(
     rowIndex: Int,
     seatIndex: Int,
-    layoutConfig: com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutConfig
+    layoutConfig: MatLiveAudioRoomLayoutConfig
 ): Int {
     var totalPreviousSeats = 0
     for (i in 0 until rowIndex) {

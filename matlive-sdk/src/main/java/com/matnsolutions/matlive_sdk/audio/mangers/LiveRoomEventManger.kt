@@ -14,7 +14,7 @@ import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 
 open class LiveRoomEventManger {
-    open var seatService: RoomSeatService? = null
+    val seatService: RoomSeatService =  RoomSeatService()
 
     open val messages: MutableStateFlow<List<MatLiveChatMessage>> =
         MutableStateFlow(emptyList())
@@ -27,7 +27,6 @@ open class LiveRoomEventManger {
         onInvitedToMic: ((Int) -> Unit)? = null,
         onSendGift: ((String) -> Unit)? = null
     ) {
-        if (seatService == null) return
         try {
             val event = data["event"] as Int
             val user = data["user"] as JSONObject
@@ -48,12 +47,12 @@ open class LiveRoomEventManger {
                 }
 
                 MatLiveEvents.removeUserFromSeat -> {
-                    if (data["userId"] == MatLiveJoinRoomManger.instance.currentUser?.userId) {
-                        MatLiveJoinRoomManger.instance.audioTrack?.stop()
-                        MatLiveJoinRoomManger.instance.room?.localParticipant?.setMicrophoneEnabled(
+                    if (data["userId"] == MatLiveRoomManger.instance.currentUser?.userId) {
+                        MatLiveRoomManger.instance.audioTrack?.stop()
+                        MatLiveRoomManger.instance.room?.localParticipant?.setMicrophoneEnabled(
                             false
                         )
-                        MatLiveJoinRoomManger.instance.onMic = false
+                        MatLiveRoomManger.instance.onMic = false
                     }
                 }
 
@@ -62,7 +61,7 @@ open class LiveRoomEventManger {
                 }
 
                 MatLiveEvents.inviteUserToTakeMic -> {
-                    if (MatLiveJoinRoomManger.instance.currentUser?.userId == data["userId"] && onInvitedToMic != null) {
+                    if (MatLiveRoomManger.instance.currentUser?.userId == data["userId"] && onInvitedToMic != null) {
                         onInvitedToMic(data["seatIndex"] as Int)
                     }
                 }
@@ -87,15 +86,15 @@ open class LiveRoomEventManger {
 
 
     private suspend fun publish(data: Map<String, Any>) {
-        val room = MatLiveJoinRoomManger.instance.room
+        val room = MatLiveRoomManger.instance.room
         if (room != null) {
             val jsonObject = JSONObject(data)
 
             // Add user data
             val userObject = JSONObject().apply {
-                put("userId", MatLiveJoinRoomManger.instance.currentUser?.userId)
-                put("name", MatLiveJoinRoomManger.instance.currentUser?.name)
-                put("avatar", MatLiveJoinRoomManger.instance.currentUser?.avatar)
+                put("userId", MatLiveRoomManger.instance.currentUser?.userId)
+                put("name", MatLiveRoomManger.instance.currentUser?.name)
+                put("avatar", MatLiveRoomManger.instance.currentUser?.avatar)
             }
             jsonObject.put("user", userObject)
 

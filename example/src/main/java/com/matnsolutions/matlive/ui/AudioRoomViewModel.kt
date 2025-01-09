@@ -5,20 +5,24 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
-import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveJoinRoomManger
+import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
 import com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutConfig
 import com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutRowConfig
 import kotlinx.coroutines.launch
 
 class AudioRoomViewModel : ViewModel() {
-    val matLiveRoomManger = MatLiveJoinRoomManger.instance
+    private val matLiveRoomManger = MatLiveRoomManger.instance
     val messages = matLiveRoomManger.messages
     var loading = mutableStateOf(true)
+
+    val seatService by matLiveRoomManger::seatService
+    val onMic by matLiveRoomManger::onMic
+    val currentUser by matLiveRoomManger::currentUser
 
     fun init(
         context: Context,
         roomId: String,
+        appKey: String,
         userName: String,
         avatar: String,
         userId: String,
@@ -29,7 +33,7 @@ class AudioRoomViewModel : ViewModel() {
                 onSendGift = {}
             )
             matLiveRoomManger.connect(
-                appKey  = "\$2b\$10\$e6xwXI/OuJBS8XSMT2V.ROye2ideAywvCdLtjBSvmKttwd0DwkInW",
+                appKey = appKey,
                 context = context,
                 roomId = roomId,
                 name = userName,
@@ -37,8 +41,7 @@ class AudioRoomViewModel : ViewModel() {
                 userId = userId,
             )
 
-            val seatService = matLiveRoomManger.seatService
-            seatService?.initWithConfig(
+            seatService.initWithConfig(
                 MatLiveAudioRoomLayoutConfig(
                     rowSpacing = 16.0,
                     rowConfigs = listOf(
@@ -107,10 +110,6 @@ class AudioRoomViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        Log.e("onCleared", "DisposableEffect")
-        MatLiveJoinRoomManger.instance.close()
-//        viewModelScope.launch {
-//            MatLiveJoinRoomManger.instance.close()
-//        }
+        MatLiveRoomManger.instance.close()
     }
 }

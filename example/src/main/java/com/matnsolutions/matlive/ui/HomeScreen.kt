@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -30,16 +29,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.matnsolutions.matlive_sdk.utils.kPrint
 import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onNavigateToAudioRoom: (roomId: String, avatar: String, userName: String, userId: String) -> Unit) {
+fun HomeScreen(onNavigateToAudioRoom: (roomId: String, appKey: String, avatar: String, userName: String, userId: String) -> Unit) {
 
-    var isCreateLoading by remember { mutableStateOf(false) }
-    var isJoinLoading by remember { mutableStateOf(false) }
+    val isCreateLoading by remember { mutableStateOf(false) }
+    val isJoinLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
@@ -66,7 +64,7 @@ fun HomeScreen(onNavigateToAudioRoom: (roomId: String, avatar: String, userName:
             )
             Spacer(modifier = Modifier.height(24.dp))
             val displayMessage =
-                if (roomId != null) roomId!! else "Create a new room and start talking with others"
+                roomId
             Text(
                 text = displayMessage,
                 style = TextStyle(
@@ -114,6 +112,7 @@ fun HomeScreen(onNavigateToAudioRoom: (roomId: String, avatar: String, userName:
                             coroutineScope.launch {
                                 onNavigateToAudioRoom(
                                     roomId,
+                                    "\$2b\$10\$e6xwXI/OuJBS8XSMT2V.ROye2ideAywvCdLtjBSvmKttwd0DwkInW",
                                     "https://img-cdn.pixlr.com/image-generator/history/6565c8dff9ef18d69df3e3a2/fe1887b5-015e-4421-8c6a-1364d2f5b1e9/medium.webp",
                                     "Ahmed Attia",
                                     "10"

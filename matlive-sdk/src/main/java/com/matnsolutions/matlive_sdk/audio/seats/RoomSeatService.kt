@@ -1,7 +1,7 @@
 package com.matnsolutions.matlive_sdk.audio.seats
 
 import android.util.Log
-import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveJoinRoomManger
+import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveUser
 import com.matnsolutions.matlive_sdk.services.MatLiveService
@@ -20,7 +20,7 @@ class RoomSeatService {
     private val _maxIndex: Int get() = _seatList.value.size - 1
     private val subscriptions = mutableListOf<Any>()
 
-    private val roomId: String get() = MatLiveJoinRoomManger.instance.roomId
+    private val roomId: String get() = MatLiveRoomManger.instance.roomId
     var layoutConfig: MatLiveAudioRoomLayoutConfig? = null
     private val matLiveService = MatLiveService()
 
@@ -28,7 +28,7 @@ class RoomSeatService {
         layoutConfig = config
         _seatList.value = emptyList()
         initSeat(config)
-        val metadata = MatLiveJoinRoomManger.instance.room?.metadata
+        val metadata = MatLiveRoomManger.instance.room?.metadata
         seatsFromMetadata(metadata)
     }
 
@@ -232,7 +232,7 @@ class RoomSeatService {
 
     private suspend fun _leaveSeatIfHave() {
          val seat = _seatList.value.firstOrNull {
-            it.currentUser.value?.userId == MatLiveJoinRoomManger.instance.currentUser?.userId
+            it.currentUser.value?.userId == MatLiveRoomManger.instance.currentUser?.userId
         }
         seat?.currentUser?.value = null
         matLiveService.updateRoomMetadata(

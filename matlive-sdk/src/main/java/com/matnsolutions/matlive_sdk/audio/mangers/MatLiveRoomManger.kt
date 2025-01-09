@@ -1,14 +1,13 @@
 package com.matnsolutions.matlive_sdk.audio.mangers
 
-import com.matnsolutions.matlive_sdk.services.Utils
 import android.content.Context
 import android.util.Log
 import com.matnsolutions.matlive_sdk.audio.define.JoinRequest
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRequestTakeMic
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveUser
-import com.matnsolutions.matlive_sdk.audio.seats.RoomSeatService
 import com.matnsolutions.matlive_sdk.services.MatLiveService
+import com.matnsolutions.matlive_sdk.services.Utils
 import com.matnsolutions.matlive_sdk.utils.kPrint
 import io.livekit.android.AudioOptions
 import io.livekit.android.LiveKit
@@ -32,9 +31,9 @@ import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 
 
-class MatLiveJoinRoomManger private constructor() : LiveRoomEventManger() {
+class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
     companion object {
-        val instance: MatLiveJoinRoomManger by lazy { MatLiveJoinRoomManger() }
+        val instance: MatLiveRoomManger by lazy { MatLiveRoomManger() }
     }
 
     private val matLiveService = MatLiveService()
@@ -47,14 +46,13 @@ class MatLiveJoinRoomManger private constructor() : LiveRoomEventManger() {
 
     override var inviteRequests: MutableStateFlow<List<MatLiveRequestTakeMic>> =
         MutableStateFlow(emptyList())
-    override var seatService: RoomSeatService? = null
     private var _isSetUpped = false
     var onMic = false
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val coroutineMainScope = CoroutineScope(Dispatchers.Main)
 
-    var onInvitedToMic: ((Int) -> Unit)? = null
-    var onSendGift: ((String) -> Unit)? = null
+    private var onInvitedToMic: ((Int) -> Unit)? = null
+    private var onSendGift: ((String) -> Unit)? = null
 
     fun init(
         onInvitedToMic: ((Int) -> Unit)?,
@@ -129,16 +127,15 @@ class MatLiveJoinRoomManger private constructor() : LiveRoomEventManger() {
             }
         } catch (error: Exception) {
             kPrint("Could not connect $error")
-            throw Exception("Failed to update metadata: $error");
+            throw Exception("Failed to update metadata: $error")
         }
     }
 
-    suspend fun setUp(
+    private suspend fun setUp(
         onInvitedToMic: ((Int) -> Unit)?,
         onSendGift: ((String) -> Unit)?
     ) {
         if (room == null && _isSetUpped) return
-        seatService = RoomSeatService()
         messages.value = emptyList()
         inviteRequests.value = emptyList()
         askPublish(false)
@@ -202,7 +199,7 @@ class MatLiveJoinRoomManger private constructor() : LiveRoomEventManger() {
                             event.newMetadata!!.contains("seats")
                         ) {
                             coroutineMainScope.launch {
-                                seatService?.seatsFromMetadata(event.newMetadata)
+                                seatService.seatsFromMetadata(event.newMetadata)
                             }
                         }
                     }
@@ -233,10 +230,10 @@ class MatLiveJoinRoomManger private constructor() : LiveRoomEventManger() {
 
     fun close() {
         CoroutineScope(Dispatchers.Main).launch {
-            askPublish(false);
+            askPublish(false)
             _isSetUpped = false
-            onMic = false;
-            seatService?.clear()
+            onMic = false
+            seatService.clear()
             messages.value = emptyList()
             inviteRequests.value = emptyList()
             room?.disconnect()
@@ -246,32 +243,32 @@ class MatLiveJoinRoomManger private constructor() : LiveRoomEventManger() {
 
     }
 
-    private suspend fun _stopAudioStream() {
-        audioTrack?.stop()
-        audioTrack = null
-    }
+//    private suspend fun _stopAudioStream() {
+//        audioTrack?.stop()
+//        audioTrack = null
+//    }
 
     suspend fun takeSeat(seatIndex: Int) {
         askPublish(true)
-        onMic = true;
-        seatService?.takeSeat(
+        onMic = true
+        seatService.takeSeat(
             seatIndex,
             instance.currentUser!!
         )
     }
 
     suspend fun lockSeat(seatIndex: Int) {
-        seatService?.lockSeat(seatIndex)
+        seatService.lockSeat(seatIndex)
     }
 
     suspend fun unLockSeat(seatIndex: Int) {
-        seatService?.unLockSeat(seatIndex)
+        seatService.unLockSeat(seatIndex)
     }
 
     suspend fun leaveSeat(seatIndex: Int) {
-        onMic = false;
+        onMic = false
         askPublish(false)
-        seatService?.leaveSeat(
+        seatService.leaveSeat(
             seatIndex,
             instance.currentUser!!.userId
         )
@@ -289,18 +286,18 @@ class MatLiveJoinRoomManger private constructor() : LiveRoomEventManger() {
     suspend fun muteSeat(seatIndex: Int) {
         askPublishMute(true)
         Log.e("Mute", "muteSeat")
-        seatService?.muteSeat(seatIndex)
+        seatService.muteSeat(seatIndex)
     }
 
     suspend fun unMuteSeat(seatIndex: Int) {
         kPrint("unMuteSeat")
         askPublishMute(false)
-        seatService?.unMuteSeat(seatIndex)
+        seatService.unMuteSeat(seatIndex)
     }
 
     suspend fun removeUserFromSeat(seatIndex: Int) {
         kPrint("removeUserFromSeat")
-        val userId = seatService?.removeUserFromSeat(seatIndex)
+        val userId = seatService.removeUserFromSeat(seatIndex)
         if (userId != null) {
             super.removeSpeaker(seatIndex, userId)
         }
@@ -309,9 +306,9 @@ class MatLiveJoinRoomManger private constructor() : LiveRoomEventManger() {
     suspend fun switchSeat(toSeatIndex: Int) {
         val userId = currentUser!!.userId
         val seatId =
-            seatService?.seatList?.value?.indexOfFirst { it.currentUser.value?.userId == userId }
-        if (seatId == null || seatId == -1) return
-        seatService?.switchSeat(
+            seatService.seatList.value.indexOfFirst { it.currentUser.value?.userId == userId }
+        if (seatId == -1) return
+        seatService.switchSeat(
             seatId,
             toSeatIndex,
             userId

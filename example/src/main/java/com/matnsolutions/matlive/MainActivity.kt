@@ -31,25 +31,28 @@ fun AppNavigation() {
 
     NavHost(navController = navController, startDestination = "main") {
         composable("main") {
-            HomeScreen(onNavigateToAudioRoom = { roomId, avatar, userName, userId ->
-                navController.navigate("audioRoom/$roomId?avatar=$avatar&userName=$userName&userId=$userId")
+            HomeScreen(onNavigateToAudioRoom = { roomId, appKey, avatar, userName, userId ->
+                navController.navigate("audioRoom/$roomId?appKey=$appKey&avatar=$avatar&userName=$userName&userId=$userId")
             })
         }
         composable(
-            route = "audioRoom/{roomId}?avatar={avatar}&userName={userName}&userId={userId}",
+            route = "audioRoom/{roomId}?appKey={appKey}&avatar={avatar}&userName={userName}&userId={userId}",
             arguments = listOf(
                 navArgument("roomId") { type = NavType.StringType },
+                navArgument("appKey") { type = NavType.StringType },
                 navArgument("avatar") { type = NavType.StringType },
                 navArgument("userName") { type = NavType.StringType },
                 navArgument("userId") { type = NavType.StringType },
             )
         ) { backStackEntry ->
             val roomId = backStackEntry.arguments?.getString("roomId") ?: ""
+            val appKey = backStackEntry.arguments?.getString("appKey") ?: ""
             val avatar = backStackEntry.arguments?.getString("avatar") ?: ""
             val userName = backStackEntry.arguments?.getString("userName") ?: ""
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
             AudioRoomScreen(
                 roomId = roomId,
+                appKey = appKey,
                 avatar = avatar,
                 userName = userName,
                 userId = userId

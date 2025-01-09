@@ -18,12 +18,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SeatActionBottomSheet(
     showBottomSheet: Boolean,
-    seat: com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat,
+    seat: MatLiveRoomAudioSeat,
     seatIndex: Int,
     audioRoomViewModel: AudioRoomViewModel,
     onDismiss: () -> Unit,
@@ -46,7 +47,7 @@ fun SeatActionBottomSheet(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (seat.currentUser.value == null) {
-                    if (!audioRoomViewModel.matLiveRoomManger.onMic && !seat.isLocked.value!!) {
+                    if (!audioRoomViewModel.onMic && !seat.isLocked.value!!) {
                         ActionButton(
                             icon = Icons.Filled.Mic,
                             label = "Take Mic",
@@ -56,7 +57,7 @@ fun SeatActionBottomSheet(
                             }
                         )
                     }
-                    if (audioRoomViewModel.matLiveRoomManger.onMic && !seat.isLocked.value!!) {
+                    if (audioRoomViewModel.onMic && !seat.isLocked.value!!) {
                         ActionButton(
                             icon = Icons.Filled.SwapCalls,
                             label = "Switch Mic",
@@ -89,7 +90,7 @@ fun SeatActionBottomSheet(
                         )
                     }
                 } else {
-                    val currentUserId = audioRoomViewModel.matLiveRoomManger.currentUser?.userId
+                    val currentUserId = audioRoomViewModel.currentUser?.userId
                     val user = seat.currentUser.value!!
                     val isMicOn by user.isMicOnNotifier.observeAsState(initial = false)
                     if (seat.currentUser.value?.userId == currentUserId) {

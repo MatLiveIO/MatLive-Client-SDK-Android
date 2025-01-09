@@ -21,15 +21,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
-import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveJoinRoomManger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudioRoomScreen(
     roomId: String,
+    appKey: String,
     avatar: String,
     userName: String,
     userId: String,
@@ -40,15 +38,7 @@ fun AudioRoomScreen(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.init(context, roomId,  userName, avatar, userId)
-    }
-    DisposableEffect(Unit) {
-        onDispose {
-            Log.e("DisposableEffect", "DisposableEffect")
-//            CoroutineScope(Dispatchers.Main).launch {
-//                MatLiveJoinRoomManger.instance.close()
-//            }
-        }
+        viewModel.init(context, roomId,  appKey,  userName, avatar, userId)
     }
     Scaffold(
         topBar = {

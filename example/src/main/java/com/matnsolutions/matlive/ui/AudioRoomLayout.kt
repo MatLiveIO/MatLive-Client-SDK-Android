@@ -26,7 +26,7 @@ import com.matnsolutions.matlive_sdk.audio.seats.MatLiveAudioRoomLayoutConfig
 fun AudioRoomLayout(
     viewModel: AudioRoomViewModel,
 ) {
-    val seatService = viewModel.matLiveRoomManger.seatService ?: return
+    val seatService = viewModel.seatService
     val seats by seatService.seatList.collectAsState()
     val layoutConfig = seatService.layoutConfig ?: return
     Column(

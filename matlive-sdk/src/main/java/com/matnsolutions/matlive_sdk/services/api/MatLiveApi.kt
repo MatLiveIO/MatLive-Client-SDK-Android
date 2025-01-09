@@ -1,7 +1,5 @@
 package com.matnsolutions.matlive_sdk.services.api
 
-import com.matnsolutions.matlive_sdk.services.CreateRoomRequest
-import com.matnsolutions.matlive_sdk.services.UpdateMetadataRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET

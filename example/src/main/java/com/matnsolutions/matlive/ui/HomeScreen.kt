@@ -189,7 +189,7 @@ fun HomeScreen(onNavigateToAudioRoom: (roomId: String, appKey: String, avatar: S
     }
 }
 
-var roomId: String = "room_2"
+var roomId: String = "room_3"
 //private suspend fun createRoom(
 //    livekitService: LiveKitService,
 //    setLoading: (Boolean) -> Unit

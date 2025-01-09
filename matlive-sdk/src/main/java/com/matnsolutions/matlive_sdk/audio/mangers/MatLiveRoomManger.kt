@@ -54,16 +54,6 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
     private var onInvitedToMic: ((Int) -> Unit)? = null
     private var onSendGift: ((String) -> Unit)? = null
 
-    fun init(
-        onInvitedToMic: ((Int) -> Unit)?,
-        onSendGift: ((String) -> Unit)?,
-    ) {
-        _request.url = Utils.url
-        this.onInvitedToMic = onInvitedToMic
-        this.onSendGift = onSendGift
-//        initLocalAudioTrack();
-    }
-
     suspend fun connect(
         context: Context,
         appKey: String,
@@ -72,8 +62,14 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
         userId: String,
         roomId: String,
         metadata: String? = null,
+        onInvitedToMic: ((Int) -> Unit)?,
+        onSendGift: ((String) -> Unit)?,
     ) {
 
+        _request.url = Utils.url
+        this.onInvitedToMic = onInvitedToMic
+        this.onSendGift = onSendGift
+//        initLocalAudioTrack();
 
         joinRoom(roomId, appKey) { newId, token ->
             _request.token = token

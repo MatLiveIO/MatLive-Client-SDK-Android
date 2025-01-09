@@ -28,10 +28,6 @@ class AudioRoomViewModel : ViewModel() {
         userId: String,
     ) {
         viewModelScope.launch {
-            matLiveRoomManger.init(
-                onInvitedToMic = {},
-                onSendGift = {}
-            )
             matLiveRoomManger.connect(
                 appKey = appKey,
                 context = context,
@@ -39,6 +35,8 @@ class AudioRoomViewModel : ViewModel() {
                 name = userName,
                 avatar = avatar,
                 userId = userId,
+                onInvitedToMic = {},
+                onSendGift = {}
             )
 
             seatService.initWithConfig(

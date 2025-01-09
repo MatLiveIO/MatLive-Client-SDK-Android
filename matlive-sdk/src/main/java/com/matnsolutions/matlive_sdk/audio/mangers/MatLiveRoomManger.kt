@@ -97,7 +97,7 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
                     adaptiveStream = _request.adaptiveStream,
                     dynacast = _request.dynacast,
                     e2eeOptions = e2eeOptions,
-                    audioTrackPublishDefaults = AudioTrackPublishDefaults(audioBitrate = 3200)
+//                    audioTrackPublishDefaults = AudioTrackPublishDefaults(audioBitrate = 3200)
                 ),
                 overrides = LiveKitOverrides(
                     audioOptions = AudioOptions(audioProcessorOptions = AudioProcessorOptions()),

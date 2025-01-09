@@ -39,7 +39,7 @@ class AudioRoomViewModel : ViewModel() {
                 onSendGift = {}
             )
 
-            seatService.initWithConfig(
+            matLiveRoomManger.seatService.initWithConfig(
                 MatLiveAudioRoomLayoutConfig(
                     rowSpacing = 16.0,
                     rowConfigs = listOf(

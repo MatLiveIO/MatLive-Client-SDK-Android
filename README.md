@@ -10,7 +10,14 @@ The MatLive SDK provides audio room management capabilities including:
 - Event handling
 
 ## Installation
-Add the SDK dependency to your project.
+
+Add the SDK dependency to your app's `build.gradle`:
+
+```groovy
+dependencies {
+    implementation 'com.matnsolutions:matlive-sdk:1.0.0'
+}
+```
 
 ## Usage
 
@@ -20,41 +27,34 @@ Initialize the SDK in your ViewModel:
 ```kotlin
 val matLiveRoomManger = MatLiveRoomManger.instance
 
-fun init(
-    context: Context,
-    roomId: String, 
-    appKey: String,
-    userName: String,
-    avatar: String,
-    userId: String
-) {
-    viewModelScope.launch {
-        matLiveRoomManger.init(
-            onInvitedToMic = {},
-            onSendGift = {}
-        )
-        
-        matLiveRoomManger.connect(
-            appKey = appKey,
-            context = context,
-            roomId = roomId,
-            name = userName,
-            avatar = avatar,
-            userId = userId
-        )
-        
-        // Configure seat layout
-        matLiveRoomManger.seatService.initWithConfig(
-            MatLiveAudioRoomLayoutConfig(
-                rowSpacing = 16.0,
-                rowConfigs = listOf(
-                    MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12),
-                    MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12)
-                )
+
+viewModelScope.launch {
+    matLiveRoomManger.init(
+        onInvitedToMic = {},
+        onSendGift = {}
+    )
+    
+    matLiveRoomManger.connect(
+        appKey = appKey,
+        context = context,
+        roomId = roomId,
+        name = userName,
+        avatar = avatar,
+        userId = userId
+    )
+    
+    // Configure seat layout
+    matLiveRoomManger.seatService.initWithConfig(
+        MatLiveAudioRoomLayoutConfig(
+            rowSpacing = 16.0,
+            rowConfigs = listOf(
+                MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12),
+                MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12)
             )
         )
-    }
+    )
 }
+
 ```
 
 ### Seat Management
@@ -105,6 +105,9 @@ fun unMuteSeat(seatIndex: Int) {
 
 ### Messaging
 ```kotlin
+
+val messages = matLiveRoomManger.messages
+
 fun sendMessage(message: String) {
     viewModelScope.launch {
         matLiveRoomManger.sendMessage(message)
@@ -114,26 +117,11 @@ fun sendMessage(message: String) {
 
 ### Cleanup
 ```kotlin
-override fun onCleared() {
-    super.onCleared()
-    MatLiveRoomManger.instance.close()
-}
-```
 
-## Configuration
-Customize the room layout using `MatLiveAudioRoomLayoutConfig`:
+MatLiveRoomManger.instance.close()
 
-```kotlin
-MatLiveAudioRoomLayoutConfig(
-    rowSpacing = 16.0,
-    rowConfigs = listOf(
-        MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12),
-        MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12)
-    )
-)
 ```
 
 ## Requirements
 - Android API level 21+
 - Kotlin Coroutines
-- LiveKit Android SDK

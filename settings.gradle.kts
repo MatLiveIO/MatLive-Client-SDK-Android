@@ -12,14 +12,20 @@ pluginManagement {
     }
 }
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
-        google()
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
         mavenCentral()
         maven { url = uri("https://jitpack.io") }
     }
 }
 
-rootProject.name = "MatLive-Client-SDK-Android"
+rootProject.name = "matlive"
 include(":example")
 include(":matlive-sdk")

@@ -15,7 +15,7 @@ Add the SDK dependency to your app's `build.gradle`:
 
 ```groovy
 dependencies {
-    implementation 'com.matnsolutions:matlive-sdk:1.0.0'
+    implementation 'com.github.MatLiveIO:MatLive-Client-SDK-Android:x.x.x'
 }
 ```
 

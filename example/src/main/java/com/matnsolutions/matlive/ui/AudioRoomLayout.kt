@@ -34,17 +34,19 @@ fun AudioRoomLayout(
     ) {
         layoutConfig.rowConfigs.forEachIndexed { rowIndex, rowConfig ->
             Row(
-                modifier = Modifier.padding(bottom = layoutConfig.rowSpacing.dp),
+                modifier = Modifier.padding(vertical = layoutConfig.rowSpacing.dp),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 for (seatIndex in 0 until rowConfig.count) {
                     val globalIndex = calculateGlobalIndex(rowIndex, seatIndex, layoutConfig)
                     val seat = seats.getOrNull(globalIndex)!!
-                    SeatItem(
-                        seat = seat,
-                        seatIndex = globalIndex,
-                        viewModel = viewModel
-                    )
+                    Box(modifier = Modifier.padding(horizontal = rowConfig.seatSpacing.dp)) {
+                        SeatItem(
+                            seat = seat,
+                            seatIndex = globalIndex,
+                            viewModel = viewModel
+                        )
+                    }
                 }
             }
         }
@@ -73,6 +75,7 @@ private fun SeatItem(
                     modifier = Modifier
                         .size(22.dp)
                         .align(Alignment.Center)
+                        .padding(all = 8.dp)
                 )
             } else {
                 SeatWidget(seat = seat)
@@ -108,9 +111,6 @@ private fun SeatWidget(seat: MatLiveRoomAudioSeat) {
                         .fillMaxSize()
                         .clip(CircleShape),
                     contentScale = ContentScale.Crop,
-//                    error = {
-//                        Icon(Icons.Filled.Person, contentDescription = "User Avatar", modifier = Modifier.size(22.dp))
-//                    }
                 )
             } else {
                 Icon(
@@ -119,6 +119,7 @@ private fun SeatWidget(seat: MatLiveRoomAudioSeat) {
                     modifier = Modifier
                         .size(22.dp)
                         .align(Alignment.Center)
+                        .padding(all = 6.dp)
                 )
             }
         }

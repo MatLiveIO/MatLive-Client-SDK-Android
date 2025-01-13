@@ -1,5 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Light theme colors -->
+    <color name="Purple40">#6650a4</color>
+    <color name="PurpleGrey40">#625b71</color>
+    <color name="Pink40">#7D5260</color>
+    
+    <!-- Existing colors -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -7,4 +12,10 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Additional light theme colors -->
+    <color name="surface">#FFFFFF</color>
+    <color name="onSurface">#000000</color>
+    <color name="background">#FFFFFF</color>
+    <color name="onBackground">#000000</color>
 </resources>

@@ -1,7 +1,6 @@
 package com.matnsolutions.matlive.ui
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -43,8 +42,8 @@ class AudioRoomViewModel : ViewModel() {
                 MatLiveAudioRoomLayoutConfig(
                     rowSpacing = 16.0,
                     rowConfigs = listOf(
-                        MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12),
-                        MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 12)
+                        MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 6),
+                        MatLiveAudioRoomLayoutRowConfig(count = 4, seatSpacing = 6)
                     )
                 )
             )

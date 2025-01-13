@@ -20,7 +20,6 @@ import io.livekit.android.e2ee.E2EEOptions
 import io.livekit.android.events.RoomEvent
 import io.livekit.android.events.collect
 import io.livekit.android.room.Room
-import io.livekit.android.room.participant.AudioTrackPublishDefaults
 import io.livekit.android.room.track.LocalAudioTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,12 +68,13 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
         _request.url = Utils.url
         this.onInvitedToMic = onInvitedToMic
         this.onSendGift = onSendGift
-//        initLocalAudioTrack();
 
         joinRoom(roomId, appKey) { newId, token ->
             _request.token = token
             this.roomId = newId
         }
+        if (_request.token.isEmpty()) return
+
 
         currentUser = MatLiveUser(
             name = name,
@@ -109,9 +109,6 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
                 room?.connect(
                     _request.url,
                     _request.token,
-//                options = ConnectOptions(
-//                    microphone = TrackOption(track = audioTrack),
-//                )
                 )
             }
             setUp(onInvitedToMic, onSendGift)
@@ -140,27 +137,6 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
             room?.events?.collect { event ->
                 kPrint("event: $event")
                 when (event) {
-                    is RoomEvent.ParticipantConnected -> {
-                    }
-
-                    is RoomEvent.ParticipantDisconnected -> {
-                    }
-
-                    is RoomEvent.TrackPublished -> {
-                    }
-
-                    is RoomEvent.TrackUnpublished -> {
-                    }
-
-                    is RoomEvent.TrackSubscribed -> {
-                    }
-
-                    is RoomEvent.TrackUnsubscribed -> {
-                    }
-
-                    is RoomEvent.TrackStreamStateChanged -> {
-                    }
-
                     is RoomEvent.DataReceived -> {
                         val data = try {
                             val jsonString = String(event.data, StandardCharsets.UTF_8)
@@ -175,20 +151,12 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
                         } catch (e: Exception) {
                             mapOf()
                         }
-                        kPrint(data)
                         receivedData(
                             data,
                             onInvitedToMic,
                             onSendGift
                         )
                     }
-
-                    is RoomEvent.Disconnected -> {
-                    }
-
-                    is RoomEvent.RecordingStatusChanged -> {
-                    }
-
                     is RoomEvent.RoomMetadataChanged -> {
                         if (event.newMetadata != null &&
                             event.newMetadata!!.isNotEmpty() &&
@@ -200,24 +168,7 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
                         }
                     }
 
-                    is RoomEvent.LocalTrackSubscribed -> {
-                    }
-
-                    is RoomEvent.ParticipantNameChanged -> {
-                    }
-
-                    is RoomEvent.ParticipantMetadataChanged -> {
-                    }
-
-                    is RoomEvent.TrackE2EEStateEvent -> {
-                        kPrint("e2ee state: ${event.state}")
-                    }
-
-                    is RoomEvent.Reconnecting -> {
-                    }
-
-                    else -> {
-                    }
+                    else -> {}
                 }
             }
         }
@@ -238,11 +189,6 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
         }
 
     }
-
-//    private suspend fun _stopAudioStream() {
-//        audioTrack?.stop()
-//        audioTrack = null
-//    }
 
     suspend fun takeSeat(seatIndex: Int) {
         askPublish(true)
@@ -281,18 +227,15 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
 
     suspend fun muteSeat(seatIndex: Int) {
         askPublishMute(true)
-        Log.e("Mute", "muteSeat")
         seatService.muteSeat(seatIndex)
     }
 
     suspend fun unMuteSeat(seatIndex: Int) {
-        kPrint("unMuteSeat")
         askPublishMute(false)
         seatService.unMuteSeat(seatIndex)
     }
 
     suspend fun removeUserFromSeat(seatIndex: Int) {
-        kPrint("removeUserFromSeat")
         val userId = seatService.removeUserFromSeat(seatIndex)
         if (userId != null) {
             super.removeSpeaker(seatIndex, userId)
@@ -309,7 +252,6 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
             toSeatIndex,
             userId
         )
-        kPrint("switchSeat")
     }
 
     private suspend fun askPublishMute(value: Boolean) {
@@ -322,7 +264,6 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
 
     private suspend fun askPublish(value: Boolean) {
         room?.localParticipant?.setMicrophoneEnabled(value)
-        room?.localParticipant?.setCameraEnabled(false)
     }
 
     private suspend fun joinRoom(
@@ -345,11 +286,10 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
                 onSuccess(newId, token)
             }.onFailure { error ->
                 // Handle error
-//            println("Error: ${error.message}")
-                throw Exception(error.message)
+                Log.e("joinRoom", "joinRoom error: $error")
             }
         } catch (e: Exception) {
-            throw Exception(e)
+            Log.e("joinRoom", "joinRoom error: $e")
         }
     }
 

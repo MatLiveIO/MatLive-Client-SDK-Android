@@ -4,15 +4,14 @@ plugins {
     id("maven-publish")
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = "com.github.MatLiveIO"
-            artifactId = "MatLive-Client-SDK-Android"
-            version = "1.0.0"
-
-            afterEvaluate {
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
                 from(components["release"])
+                groupId = "com.github.MatLiveIO"
+                artifactId = "MatLive-Client-SDK-Android"
+                version = "1.0.0"
             }
         }
     }

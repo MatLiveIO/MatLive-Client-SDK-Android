@@ -1,9 +1,9 @@
 package com.matnsolutions.matlive_sdk.audio.mangers
 
 import android.util.Log
-import com.matnsolutions.matlive_sdk.audio.define.MatLiveRequestTakeMic
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveChatMessage
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveEvents
+import com.matnsolutions.matlive_sdk.audio.define.MatLiveRequestTakeMic
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveUser
 import com.matnsolutions.matlive_sdk.audio.seats.RoomSeatService
 import com.matnsolutions.matlive_sdk.utils.kPrint
@@ -46,13 +46,21 @@ open class LiveRoomEventManger {
                     )
                 }
 
+                MatLiveEvents.muteSeat,
                 MatLiveEvents.removeUserFromSeat -> {
                     if (data["userId"] == MatLiveRoomManger.instance.currentUser?.userId) {
-                        MatLiveRoomManger.instance.audioTrack?.stop()
                         MatLiveRoomManger.instance.room?.localParticipant?.setMicrophoneEnabled(
                             false
                         )
                         MatLiveRoomManger.instance.onMic = false
+                    }
+                }
+                MatLiveEvents.unMuteSeat -> {
+                    if (data["userId"] == MatLiveRoomManger.instance.currentUser?.userId) {
+                        MatLiveRoomManger.instance.room?.localParticipant?.setMicrophoneEnabled(
+                            true
+                        )
+                        MatLiveRoomManger.instance.onMic = true
                     }
                 }
 
@@ -137,6 +145,26 @@ open class LiveRoomEventManger {
         publish(
             mapOf(
                 "event" to MatLiveEvents.inviteUserToTakeMic,
+                "seatIndex" to seatIndex,
+                "userId" to userId
+            )
+        )
+    }
+
+    suspend fun muteSeat(userId: String, seatIndex: Int) {
+        publish(
+            mapOf(
+                "event" to MatLiveEvents.muteSeat,
+                "seatIndex" to seatIndex,
+                "userId" to userId
+            )
+        )
+    }
+
+    suspend fun unMuteSeat(userId: String, seatIndex: Int) {
+        publish(
+            mapOf(
+                "event" to MatLiveEvents.unMuteSeat,
                 "seatIndex" to seatIndex,
                 "userId" to userId
             )

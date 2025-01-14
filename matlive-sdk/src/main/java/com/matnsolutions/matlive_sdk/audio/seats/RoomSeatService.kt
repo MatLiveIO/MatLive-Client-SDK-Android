@@ -1,9 +1,9 @@
 package com.matnsolutions.matlive_sdk.audio.seats
 
 import android.util.Log
-import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveRoomAudioSeat
 import com.matnsolutions.matlive_sdk.audio.define.MatLiveUser
+import com.matnsolutions.matlive_sdk.audio.mangers.MatLiveRoomManger
 import com.matnsolutions.matlive_sdk.services.MatLiveService
 import com.matnsolutions.matlive_sdk.utils.kPrint
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -192,9 +192,10 @@ class RoomSeatService {
         }
     }
 
-    suspend fun muteSeat(seatIndex: Int) {
-        if (seatIndex == -1 || seatIndex > _maxIndex) return
+    suspend fun muteSeat(seatIndex: Int): String?{
+        if (seatIndex == -1 || seatIndex > _maxIndex) return null
         val seat = _seatList.value[seatIndex]
+        val userId = seat.currentUser.value?.userId
         if (seat.currentUser.value != null) {
             seat.currentUser.value!!.isMicOnNotifier.value = false
             matLiveService.updateRoomMetadata(
@@ -202,11 +203,13 @@ class RoomSeatService {
                 metadata = getSeatInfo(),
             )
         }
+        return userId
     }
 
-    suspend fun unMuteSeat(seatIndex: Int) {
-        if (seatIndex == -1 || seatIndex > _maxIndex) return
+    suspend fun unMuteSeat(seatIndex: Int):String? {
+        if (seatIndex == -1 || seatIndex > _maxIndex) return null
         val seat = _seatList.value[seatIndex]
+        val userId = seat.currentUser.value?.userId
         if (seat.currentUser.value != null) {
             seat.currentUser.value!!.isMicOnNotifier.value = true
             matLiveService.updateRoomMetadata(
@@ -214,6 +217,7 @@ class RoomSeatService {
                 metadata = getSeatInfo(),
             )
         }
+        return userId
     }
 
     suspend fun removeUserFromSeat(seatIndex: Int): String? {

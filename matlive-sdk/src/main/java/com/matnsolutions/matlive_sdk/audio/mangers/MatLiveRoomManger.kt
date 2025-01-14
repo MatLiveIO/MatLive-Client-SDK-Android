@@ -20,7 +20,6 @@ import io.livekit.android.e2ee.E2EEOptions
 import io.livekit.android.events.RoomEvent
 import io.livekit.android.events.collect
 import io.livekit.android.room.Room
-import io.livekit.android.room.track.LocalAudioTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -39,7 +38,6 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
     private val _request = JoinRequest()
 
     var currentUser: MatLiveUser? = null
-    var audioTrack: LocalAudioTrack? = null
     var roomId: String = ""
     var room: Room? = null
 
@@ -131,11 +129,11 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
         if (room == null && _isSetUpped) return
         messages.value = emptyList()
         inviteRequests.value = emptyList()
-        askPublish(false)
+        setMicrophoneEnabled(false)
 
         coroutineScope.launch {
             room?.events?.collect { event ->
-                kPrint("event: $event")
+                kPrint("event: ${event.toString().split(".").last()}")
                 when (event) {
                     is RoomEvent.DataReceived -> {
                         val data = try {
@@ -177,7 +175,7 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
 
     fun close() {
         CoroutineScope(Dispatchers.Main).launch {
-            askPublish(false)
+            setMicrophoneEnabled(false)
             _isSetUpped = false
             onMic = false
             seatService.clear()
@@ -191,7 +189,7 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
     }
 
     suspend fun takeSeat(seatIndex: Int) {
-        askPublish(true)
+        setMicrophoneEnabled(true)
         onMic = true
         seatService.takeSeat(
             seatIndex,
@@ -209,7 +207,7 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
 
     suspend fun leaveSeat(seatIndex: Int) {
         onMic = false
-        askPublish(false)
+        setMicrophoneEnabled(false)
         seatService.leaveSeat(
             seatIndex,
             instance.currentUser!!.userId
@@ -226,13 +224,24 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
     }
 
     suspend fun muteSeat(seatIndex: Int) {
-        askPublishMute(true)
+        val userSeatId =
+            seatService.muteSeat(seatIndex) ?: return
+        if(currentUser?.userId == userSeatId){
+            setMicrophoneEnabled(false)
+        }else{
+            super.muteSeat(userSeatId,seatIndex)
+        }
         seatService.muteSeat(seatIndex)
     }
 
     suspend fun unMuteSeat(seatIndex: Int) {
-        askPublishMute(false)
-        seatService.unMuteSeat(seatIndex)
+        val userSeatId =
+            seatService.unMuteSeat(seatIndex) ?: return
+        if(currentUser?.userId == userSeatId){
+            setMicrophoneEnabled(true)
+        }else{
+            super.unMuteSeat(userSeatId,seatIndex)
+        }
     }
 
     suspend fun removeUserFromSeat(seatIndex: Int) {
@@ -254,16 +263,10 @@ class MatLiveRoomManger private constructor() : LiveRoomEventManger() {
         )
     }
 
-    private suspend fun askPublishMute(value: Boolean) {
-        if (value) {
-            room?.localParticipant?.setMicrophoneEnabled(false)
-        } else {
-            room?.localParticipant?.setMicrophoneEnabled(true)
-        }
-    }
 
-    private suspend fun askPublish(value: Boolean) {
-        room?.localParticipant?.setMicrophoneEnabled(value)
+
+    private suspend fun setMicrophoneEnabled(isMute: Boolean) {
+        room?.localParticipant?.setMicrophoneEnabled(isMute)
     }
 
     private suspend fun joinRoom(

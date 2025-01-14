@@ -175,18 +175,4 @@ fun HomeScreen(onNavigateToAudioRoom: (roomId: String, appKey: String, avatar: S
             }
         }
     }
-
 }
-
-val images = listOf(
-    "https://img-cdn.pixlr.com/image-generator/history/65bb506dcb310754719cf81f/ede935de-1138-4f66-8ed7-44bd16efc709/medium.webp",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ718nztPNJfCbDJjZG8fOkejBnBAeQw5eAUA&s",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQll3t93lH9yx9shW9OMmDw5ft8sYdTs7bHcZZFyACGnKwdnWwPU7JW3KT2oAB0jEQSJiU&usqp=CAU",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUXxSDbIbLLYxjHI9ht0lLf0VMmioBijVmoJeoItlMoUmfuu_AG3Or3K5kSx3YHbUBt3Q&usqp=CAU",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1Dw7-4lVfRq74_YEiPEt4e-bQ0_6UA2y73Q&s",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-C_UAhXq9GfuGO452EEzfbKnh1viQB9EDBQ&s",
-    "https://www.shutterstock.com/shutterstock/photos/2137527991/display_1500/stock-photo-portrait-of-smiling-mature-man-standing-on-white-background-2137527991.jpg",
-    "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSplJ-5PtH61bgDfJtFiSWZtSOTjN_cyxamkg&s",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqPRe6_8SSJ591Lt4jckiMaLvfvnjP2Z_oIQ&s",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSG7CH2bTx8kyDAU6Zc6rR0fX2X_4NGiANCTw&s",

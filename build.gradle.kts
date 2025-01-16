@@ -11,10 +11,8 @@ allprojects {
         mavenCentral()
         maven {
             url = uri("https://jitpack.io")
-            credentials {
-                username = project.findProperty("gpr.usr") as String? ?: ""
-                password = project.findProperty("gpr.key") as String? ?: ""
-            }
+            credentials { username = project.findProperty("authToken") as String? ?: "" }
+
         }
     }
 }
